@@ -71,7 +71,7 @@ export const VehiclesPage: React.FC<VehiclesPageProps> = ({ onNavigate, id }) =>
             BYD <span className="font-semibold text-cyan-300">Horizon Fleet</span> Catalog
           </h1>
           <p className="text-white/60 text-sm md:text-base max-w-2xl leading-relaxed">
-            Welcome to the future of high-performance electric transportation. Examine extensive galleries, dynamic art forms, and secure purchase or leasing allocations through the secure blockchain payment portal.
+            Welcome to the future of high-performance electric transportation. Examine extensive galleries, dynamic art forms, and secure purchase or leasing allocations through our secure blockchain payment gateway.
           </p>
         </div>
       </div>

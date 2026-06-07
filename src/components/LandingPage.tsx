@@ -811,7 +811,7 @@ export default function LandingPage({ onNavigate, charityAmount, setCharityAmoun
             </ul>
           </div>
 
-          {/* Access Portals */}
+          {/* Access Consoles */}
           <div className="space-y-3">
             <h5 className="font-display font-bold text-white uppercase text-[10px] tracking-widest text-[#7C8BA6] flex items-center">
               <BookOpen className="w-3.5 h-3.5 mr-1.5 text-orange-550" />
@@ -823,7 +823,7 @@ export default function LandingPage({ onNavigate, charityAmount, setCharityAmoun
                 onClick={() => onNavigate("dashboard")}
                 className="w-full text-center py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition font-sans font-bold text-[10.5px] tracking-wide cursor-pointer shadow-lg shadow-blue-900/10"
               >
-                Open My Telematics Portal
+                Access Secure Console Dashboard
               </button>
             </div>
           </div>
@@ -890,7 +890,7 @@ export default function LandingPage({ onNavigate, charityAmount, setCharityAmoun
                     All users of this platform stand subject to instant verification and standard auditing guidelines. Users agree never to circumvent regional teleport, telemetry, or shipping requirements. You are fully responsible for the maritime escort fees, customs duties, port clearance, and related financial escrow requirements connected with your won prizes or portfolio rewards.
                   </p>
                   <p>
-                    Any transaction proof submitted by users (including transaction hashes of cryptocurrency) is manually vetted and reconciled by the administrative platform auditor within 30 minutes of transmission. Falsified transaction hashes will trigger instant blocklist protocol on the user's portal account.
+                    Any transaction proof submitted by users (including transaction hashes of cryptocurrency) is manually vetted and reconciled by the administrative platform auditor within 30 minutes of transmission. Falsified transaction hashes will trigger instant blocklist protocol on the user's account.
                   </p>
                 </>
               )}

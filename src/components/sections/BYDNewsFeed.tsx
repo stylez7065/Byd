@@ -44,7 +44,7 @@ export const BYDNewsFeed: React.FC = () => {
         <div className="space-y-1">
           <div className="flex items-center gap-1.5 text-cyan-400 font-mono text-xs uppercase tracking-widest">
             <Radio className="w-4 h-4 animate-pulse" />
-            <span>Horizon News Portal</span>
+            <span>Horizon News Intelligence</span>
           </div>
           <h2 className="text-2xl md:text-3xl font-sans font-light text-white tracking-tight">
             Latest <span className="font-semibold text-cyan-300">BYD Milestones</span> & Insights

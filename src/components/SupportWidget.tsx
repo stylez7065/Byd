@@ -28,7 +28,7 @@ export default function SupportWidget() {
     setTimeout(() => {
       setChatMessages(prev => [...prev, {
         sender: "bot",
-        text: "Please hold on... Connection congestion is high. All human managers are currently occupied reviewing vehicle custom clearings. We suggest leaving a portal ticket or escalating directly using the Manager contact form.",
+        text: "Please hold on... Connection congestion is high. All human managers are currently occupied reviewing vehicle custom clearings. We suggest leaving a support ticket or escalating directly using the Manager contact form.",
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }]);
     }, 1500);

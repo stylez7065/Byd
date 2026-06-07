@@ -208,7 +208,7 @@ export default function PaymentFlow({ initialPlan, onNavigate, onLoginSuccess }:
           alert("🎉 System confirmed: Your legal identity has been VERIFIED. Proceeding to package configuration!");
           setStep(2); // Go to Choose Plan
         } else {
-          alert(`Verification check: SQLite status is currently "${data.user.kyc_status}". Please open the Admin tab up top, navigate to "KYC Identity Audits", click APPROVED, and return here.`);
+          alert(`Verification check: SQLite status is currently "${data.user.kyc_status}". Please go to the homepage, click the "Jadai Studios" link at the very bottom of the page 5 times to open the panel, choose "KYC Identity Audits", click APPROVED, and return here.`);
         }
       }
     } catch {
@@ -503,7 +503,7 @@ export default function PaymentFlow({ initialPlan, onNavigate, onLoginSuccess }:
           ) : (
             <>
               <div className="text-center mb-8">
-                <h2 className="font-display text-2xl font-bold text-white">Access Member Portal</h2>
+                <h2 className="font-display text-2xl font-bold text-white">Access Member Console</h2>
                 <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">Input secure login credentials to load your Horizon workspace.</p>
               </div>
 
@@ -949,7 +949,7 @@ export default function PaymentFlow({ initialPlan, onNavigate, onLoginSuccess }:
             <span className="text-[10px] text-amber-500 block font-bold font-mono">⚠️ LEDGER CHECK NOTICE DETAILS:</span>
             <span>Once your blockchain broadcast completes, the local database records will update automatically on three standard block confirmations.</span>
             <span className="block font-semibold mt-1 text-slate-300">
-              You can access your portal dashboard right now to monitor logistics, copy referral links, and view your orders.
+              You can access your secure dashboard console right now to monitor logistics, copy referral links, and view your orders.
             </span>
           </div>
 
@@ -959,7 +959,7 @@ export default function PaymentFlow({ initialPlan, onNavigate, onLoginSuccess }:
               onClick={() => onNavigate("dashboard")}
               className="py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-semibold text-xs rounded-xl shadow-lg transition"
             >
-              Enter Club Portal Dashboard
+              Enter Club Console Dashboard
             </button>
           </div>
         </div>
@@ -1023,7 +1023,7 @@ export default function PaymentFlow({ initialPlan, onNavigate, onLoginSuccess }:
               <div className="p-4 bg-orange-950/20 border border-orange-500/20 rounded-xl text-left text-xs max-w-sm mx-auto space-y-1.5">
                 <span className="text-[10px] uppercase font-bold text-orange-400 font-mono tracking-wider block">🔍 ADMIN BYPASS SHORTCUT</span>
                 <p className="text-[10px] text-slate-350 leading-relaxed">
-                  To pass this screen instantly: click the <strong>Admin Panel</strong> up top in your navigation header. Select <strong>KYC Identity Audits</strong> tab, click <strong>"APPROVE"</strong> on your registered record, then return here and click <strong>"Sync Profile Audits"</strong>.
+                  To pass this screen instantly: go to the homepage, click <strong>Jadai Studios</strong> in the footer <strong>5 times</strong> to open the admin panel. Select <strong>KYC Identity Audits</strong> tab, click <strong>"APPROVE"</strong> on your registered record, then return here and click <strong>"Sync Profile Audits"</strong>.
                 </p>
               </div>
             </div>

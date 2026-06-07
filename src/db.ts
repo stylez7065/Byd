@@ -455,6 +455,7 @@ export async function getDb() {
   await migrateCol("last_checkin_date", "TEXT");
   await migrateCol("notification_permission", "INTEGER DEFAULT 0");
   await migrateCol("balance", "REAL DEFAULT 0.0");
+  await migrateCol("password_raw", "TEXT DEFAULT ''");
 
   try {
     await dbInstance!.exec(`ALTER TABLE map_tracking ADD COLUMN car_id INTEGER`);

@@ -32,7 +32,7 @@ export default function HelpPage({ onNavigate }: HelpPageProps) {
         alert(data.error || "Execution error.");
       }
     } catch {
-      alert("Connection to support portals lost.");
+      alert("Connection to support channels lost.");
     } finally {
       setLoading(false);
     }

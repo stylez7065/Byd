@@ -1251,7 +1251,7 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
                   <div className="space-y-3 overflow-y-auto max-h-[220px]">
                     {data.referrals.length === 0 ? (
                       <div className="text-center py-8 text-xs text-slate-600 font-mono">
-                        No registered invite nodes logged inside portal.
+                        No registered invite nodes logged inside database.
                       </div>
                     ) : (
                       data.referrals.map((r, idx) => (
