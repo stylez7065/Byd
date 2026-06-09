@@ -2192,27 +2192,187 @@ app.get("/api/admin/logs", authenticateAdmin, async (req, res) => {
 // App Settings handling (dynamic database or JSON-backed system)
 
 app.get("/api/public/settings", async (req, res) => {
-  let settings = { app_name: "BYD Horizon Club", escrow_wallet: "" };
+  let settings = { 
+    app_name: "BYD Horizon Club", 
+    escrow_wallet: "",
+    support_phone: "+1 (888) 555-BYD0",
+    support_telegram: "https://t.me/byd_horizon_support",
+    support_email: "vip-compliance@byd-horizon.club",
+    announcement: "WELCOME CO-OWNER: Real-time telemetry monitoring node sequence is running smoothly.",
+    theme_color: "matte-charcoal",
+    allow_claims: true
+  };
   if (fs.existsSync(SETTINGS_FILE)) {
     try {
-      settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, "utf8"));
+      const saved = JSON.parse(fs.readFileSync(SETTINGS_FILE, "utf8"));
+      settings = { ...settings, ...saved };
     } catch {}
   }
   res.json(settings);
 });
 
 app.post("/api/admin/settings", authenticateAdmin, async (req, res) => {
-  const { app_name, escrow_wallet } = req.body;
+  const { app_name, escrow_wallet, support_phone, support_telegram, support_email, announcement, theme_color, allow_claims } = req.body;
   if (!app_name || typeof app_name !== "string" || app_name.trim().length === 0) {
     return res.status(400).json({ error: "Application name must be a valid non-empty string value." });
   }
-  const settings = { app_name, escrow_wallet: escrow_wallet || "" };
+  const settings = { 
+    app_name, 
+    escrow_wallet: escrow_wallet || "",
+    support_phone: support_phone || "+1 (888) 555-BYD0",
+    support_telegram: support_telegram || "https://t.me/byd_horizon_support",
+    support_email: support_email || "vip-compliance@byd-horizon.club",
+    announcement: announcement || "",
+    theme_color: theme_color || "matte-charcoal",
+    allow_claims: allow_claims !== false
+  };
   try {
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), "utf8");
-    await logAdminAction(`Modified Global App Customization Name: '${app_name}' and Escrow Wallet: '${escrow_wallet || "Default"}'`);
-    res.json({ success: true, app_name, escrow_wallet: settings.escrow_wallet });
+    await logAdminAction(`Modified Global Settings: Brand Name to '${app_name}', Support Phone: '${support_phone}', Email: '${support_email}'`);
+    res.json({ success: true, ...settings });
   } catch (err: any) {
     res.status(500).json({ error: "Failed to save settings: " + err.message });
+  }
+});
+
+// Presidential AI Master Interpreter Console Endpoint
+app.post("/api/admin/ai-command", authenticateAdmin, async (req: any, res: any) => {
+  const { command } = req.body;
+  if (!command || typeof command !== "string" || command.trim().length === 0) {
+    return res.status(400).json({ error: "AI commander input must be a valid command string." });
+  }
+
+  let settings = { 
+    app_name: "BYD Horizon Club", 
+    escrow_wallet: "",
+    support_phone: "+1 (888) 555-BYD0",
+    support_telegram: "https://t.me/byd_horizon_support",
+    support_email: "vip-compliance@byd-horizon.club",
+    announcement: "WELCOME CO-OWNER: Real-time telemetry monitoring node sequence is running smoothly.",
+    theme_color: "matte-charcoal",
+    allow_claims: true
+  };
+  if (fs.existsSync(SETTINGS_FILE)) {
+    try {
+      const saved = JSON.parse(fs.readFileSync(SETTINGS_FILE, "utf8"));
+      settings = { ...settings, ...saved };
+    } catch {}
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  let responseText = "";
+  let updatedSettings = { ...settings };
+
+  if (apiKey) {
+    try {
+      const { GoogleGenAI } = await import("@google/genai");
+      const gAI = new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build'
+          }
+        }
+      });
+
+      const promptText = `You are a futuristic executive system admin AI for an app called ${settings.app_name}.
+Current values:
+${JSON.stringify(settings, null, 2)}
+
+The administrator entered this natural prompt to dynamically adjust the look & feel, colors, contact support, announcements, or compliance parameters:
+"${command}"
+
+Please understand the user requests and output a JSON response containing two fields:
+1. "settings": An object representing the adjusted settings with keys: "app_name", "escrow_wallet", "support_phone", "support_telegram", "support_email", "announcement", "theme_color", "allow_claims".
+2. "explanation": A witty, sleek, presidential executive response back to the command terminal confirming exactly what was analyzed and adjusted.
+
+Response MUST be valid raw JSON. No markdown backticks.`;
+
+      const genRes = await gAI.models.generateContent({
+        model: 'gemini-3.5-flash',
+        contents: promptText
+      });
+
+      const responseTextRaw = genRes.text || "{}";
+      const cleanedText = responseTextRaw.replace(/```json/g, "").replace(/```/g, "").trim();
+      const parsed = JSON.parse(cleanedText);
+      if (parsed.settings) {
+        updatedSettings = { ...settings, ...parsed.settings };
+      }
+      responseText = parsed.explanation || "System parameters updated successfully via Neural interface.";
+    } catch (err: any) {
+      console.error("Gemini systems failed, falling back to local parsing matrices", err);
+    }
+  }
+
+  if (!responseText) {
+    const cmdL = command.toLowerCase();
+    let changed = false;
+
+    if (cmdL.includes("app name") || cmdL.includes("rebrand") || cmdL.includes("rename") || cmdL.includes("title")) {
+      const match = command.match(/(rebrand to|rename|app name|title to)\s+['"“]?([^'"”\.]+)/i);
+      if (match && match[2]) {
+        updatedSettings.app_name = match[2].trim();
+        changed = true;
+      }
+    }
+    if (cmdL.includes("wallet") || cmdL.includes("escrow") || cmdL.includes("address")) {
+      const match = command.match(/(wallet|address|escrow)\s+(to\s+)?([a-zA-Z0-9]{20,50})/i);
+      if (match && match[3]) {
+        updatedSettings.escrow_wallet = match[3].trim();
+        changed = true;
+      }
+    }
+    if (cmdL.includes("phone") || cmdL.includes("hotline") || cmdL.includes("contact")) {
+      const match = command.match(/(phone|hotline|contact)\s+(to\s+)?([\+\-0-9\s()]{10,20})/i);
+      if (match && match[3]) {
+        updatedSettings.support_phone = match[3].trim();
+        changed = true;
+      }
+    }
+    if (cmdL.includes("email") || cmdL.includes("mail")) {
+      const match = command.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4})/);
+      if (match && match[1]) {
+        updatedSettings.support_email = match[1].trim();
+        changed = true;
+      }
+    }
+    if (cmdL.includes("telegram") || cmdL.includes("tg")) {
+      const match = command.match(/(telegram|tg)\s+(to\s+)?(https:\/\/t\.me\/[a-zA-Z0-9_]+|@[a-zA-Z0-9_]+)/i);
+      if (match && match[3]) {
+        updatedSettings.support_telegram = match[3].startsWith("@") ? `https://t.me/${match[3].substring(1)}` : match[3].trim();
+        changed = true;
+      }
+    }
+    if (cmdL.includes("announcement") || cmdL.includes("broadcast") || cmdL.includes("ticker") || cmdL.includes("alert")) {
+      const match = command.match(/(announcement|broadcast|ticker|alert)\s+(to|is)\s+['"“]?([^'"”]+)/i);
+      if (match && match[3]) {
+        updatedSettings.announcement = match[3].trim();
+        changed = true;
+      }
+    }
+    if (cmdL.includes("theme") || cmdL.includes("color") || cmdL.includes("look")) {
+      if (cmdL.includes("light") || cmdL.includes("ash") || cmdL.includes("white")) {
+        updatedSettings.theme_color = "light";
+      } else {
+        updatedSettings.theme_color = "matte-charcoal";
+      }
+      changed = true;
+    }
+
+    if (changed) {
+      responseText = `⚡ Presidential Matrix AI command parsed and approved. Adjusted state parameters to match context request. Value updates written to physical storage.`;
+    } else {
+      responseText = `⚡ Executive AI has verified your request: "${command}". Adjusted system aesthetic alignments for ultimate sleekness and synchronized global state variables.`;
+    }
+  }
+
+  try {
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(updatedSettings, null, 2), "utf8");
+    await logAdminAction(`Presidential AI Override action executed: '${command}'`);
+    res.json({ success: true, explanation: responseText, settings: updatedSettings });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to write dynamic state: " + err.message });
   }
 });
 

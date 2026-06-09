@@ -10,6 +10,23 @@ export default function HelpPage({ onNavigate }: HelpPageProps) {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [supportPhone, setSupportPhone] = useState("+1 (888) 555-BYD0");
+  const [supportTelegram, setSupportTelegram] = useState("https://t.me/byd_horizon_support");
+  const [supportEmail, setSupportEmail] = useState("vip-compliance@byd-horizon.club");
+
+  React.useEffect(() => {
+    fetch("/api/public/settings")
+      .then(r => r.json())
+      .then(settings => {
+        if (settings) {
+          if (settings.support_phone) setSupportPhone(settings.support_phone);
+          if (settings.support_telegram) setSupportTelegram(settings.support_telegram);
+          if (settings.support_email) setSupportEmail(settings.support_email);
+        }
+      })
+      .catch(err => console.error("Could not sync dynamic support info onto FAQ system", err));
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.message) {
@@ -76,13 +93,28 @@ export default function HelpPage({ onNavigate }: HelpPageProps) {
               <span>Refund Guidelines & Disputes department</span>
             </h3>
             
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              For refunds or disputes, please compose a specific audit request and email:
-              <br />
-              <span className="text-cyan-400 font-bold font-mono">disputes@byhorizonclub.com</span> 
-              <br />
-              (Average response time 30 business days).
-            </p>
+            <div className="text-xs sm:text-sm text-slate-300 space-y-2">
+              <p>For escalation, refunds, or compliance holds, please reach out directly through the verified systems overridden by the Executive Board:</p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-[11px] font-mono">
+                <div className="p-2 bg-slate-950 border border-slate-850 rounded-xl">
+                  <span className="text-slate-500 uppercase block text-[8px] font-bold">compliance Email</span>
+                  <a href={`mailto:${supportEmail}`} className="text-cyan-400 hover:underline">{supportEmail}</a>
+                </div>
+                
+                <div className="p-2 bg-slate-950 border border-slate-850 rounded-xl">
+                  <span className="text-slate-500 uppercase block text-[8px] font-bold">hotline</span>
+                  <a href={`tel:${supportPhone}`} className="text-amber-400 hover:underline">{supportPhone}</a>
+                </div>
+
+                <div className="col-span-1 sm:col-span-2 p-2 bg-slate-950 border border-slate-850 rounded-xl">
+                  <span className="text-slate-500 uppercase block text-[8px] font-bold">Direct Telegram Help Desk</span>
+                  <a href={supportTelegram} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline break-all">
+                    {supportTelegram}
+                  </a>
+                </div>
+              </div>
+            </div>
 
             <div className="border border-red-500/20 bg-red-950/20 p-4 rounded-xl leading-relaxed text-xs text-red-300 font-mono">
               ★ NO REFUNDS ON CRYPTOCURRENCY PAYMENTS. Due to the immutable and decentralized nature of decentralized ledger networks, assets settles instantly on confirmations.

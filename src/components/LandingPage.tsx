@@ -3,7 +3,7 @@ import { CarImage } from "./ui/CarImage";
 import { 
   ChevronRight, Leaf, Shield, Sparkles, Users, Award, TrendingUp, 
   ChevronLeft, Calendar, Info, X, Mail, Phone, User, Battery, Gauge, Zap, CheckCircle2,
-  FileText, Scale, ShieldAlert, BookOpen
+  FileText, Scale, ShieldAlert, BookOpen, Download, Smartphone, Laptop
 } from "lucide-react";
 
 interface LandingPageProps {
@@ -281,6 +281,43 @@ export default function LandingPage({ onNavigate, charityAmount, setCharityAmoun
   const [notifyCar, setNotifyCar] = useState<any | null>(null);
   const [waitlistCar, setWaitlistCar] = useState<any | null>(null);
   const [testDriveCar, setTestDriveCar] = useState<any | null>(null);
+
+  // Simulated Native App Downloading States
+  const [downloadingPlatform, setDownloadingPlatform] = useState<"android" | "windows" | "ios" | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadCompleted, setDownloadCompleted] = useState<string | null>(null);
+
+  const handleSimulateDownload = (platform: "android" | "windows" | "ios") => {
+    setDownloadingPlatform(platform);
+    setDownloadProgress(0);
+    setDownloadCompleted(null);
+    
+    let current = 0;
+    const interval = setInterval(() => {
+      current += Math.floor(Math.random() * 15) + 10;
+      if (current >= 100) {
+        current = 100;
+        clearInterval(interval);
+        setTimeout(() => {
+          setDownloadingPlatform(null);
+          setDownloadCompleted(platform);
+
+          // Deliver a small mock client binary download package triggers safely
+          const dummyContent = "BYD Horizon Club Secured Telematics Native Companion Build Core Client Packages";
+          const blob = new Blob([dummyContent], { type: "text/plain" });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = platform === "android" ? "BYD_HorizonClub_Client.apk" : 
+                        platform === "windows" ? "BYD_HorizonClub_Desktop_Suite.exe" : "BYD_HorizonClub_PWA.html";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }, 500);
+      }
+      setDownloadProgress(Math.min(current, 100));
+    }, 120);
+  };
   
   // Legal documentation states
   const [activeLegalDoc, setActiveLegalDoc] = useState<string | null>(null);
@@ -639,6 +676,147 @@ export default function LandingPage({ onNavigate, charityAmount, setCharityAmoun
             <p className="text-xs text-slate-400 leading-relaxed">
               Receive 10 loyalty points for every single dollar spent, fully redeemable in our premium zero-fee lifestyle accessories collection.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* NATIVE APP DOWNLOADS BENTO SECTION */}
+      <section className="bg-slate-950 border-b border-slate-900 py-16 px-4" id="native-downloads-suite">
+        <div className="max-w-7xl mx-auto space-y-10">
+          <div className="text-left space-y-2">
+            <span className="text-[10px] font-mono uppercase bg-slate-900 border border-slate-800 text-slate-400 px-3 py-1 rounded-full inline-block font-semibold">
+              Cross-Platform Connectivity
+            </span>
+            <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              Download Native Companion Clients
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-400 max-w-xl leading-relaxed">
+              Unlock fluid hardware status logs, push biometric alerts, and live global logistics tracking maps coordinates directly at your fingertips.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            {/* Android Block */}
+            <div className="bg-slate-900/50 border border-slate-850 p-6 rounded-3xl flex flex-col justify-between space-y-6 hover:border-slate-800 transition">
+              <div className="space-y-4">
+                <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-sm">
+                  <Smartphone className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="font-display font-semibold text-white text-base">Android Client Platform</h4>
+                  <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                    Install the native Android .APK package to bind your biometrics and receive push alerts for logistics carriage tracking instantly.
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                {downloadingPlatform === "android" ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[10px] font-mono text-slate-400 uppercase">
+                      <span>Downloading Package...</span>
+                      <span>{downloadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden">
+                      <div className="bg-emerald-500 h-1.5 rounded-full transition-all duration-100" style={{ width: `${downloadProgress}%` }}></div>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleSimulateDownload("android")}
+                    className="w-full py-2.5 bg-slate-100 text-slate-950 hover:bg-white text-xs font-mono font-bold rounded-xl transition flex items-center justify-center space-x-2 cursor-pointer focus:outline-none"
+                  >
+                    <Download className="w-4 h-4 text-emerald-600" />
+                    <span>Download Horizon Android (APK)</span>
+                  </button>
+                )}
+                {downloadCompleted === "android" && (
+                  <p className="text-[10px] font-mono text-emerald-400 mt-2 text-center">✓ APK Package downloaded successfully. Run on device.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Windows Desktop Suite */}
+            <div className="bg-slate-900/50 border border-slate-850 p-6 rounded-3xl flex flex-col justify-between space-y-6 hover:border-slate-800 transition">
+              <div className="space-y-4">
+                <div className="h-12 w-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-sm">
+                  <Laptop className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="font-display font-semibold text-white text-base">Windows Desktop Suite</h4>
+                  <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                    Deploy the optimized .EXE executive shell launcher for multi-screen webcam grids, real-time telemetry rendering and compliance settings.
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                {downloadingPlatform === "windows" ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[10px] font-mono text-slate-400 uppercase">
+                      <span>Compiling Setup binaries...</span>
+                      <span>{downloadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden">
+                      <div className="bg-cyan-400 h-1.5 rounded-full transition-all duration-100" style={{ width: `${downloadProgress}%` }}></div>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleSimulateDownload("windows")}
+                    className="w-full py-2.5 bg-slate-100 text-slate-950 hover:bg-white text-xs font-mono font-bold rounded-xl transition flex items-center justify-center space-x-2 cursor-pointer focus:outline-none"
+                  >
+                    <Download className="w-4 h-4 text-slate-600" />
+                    <span>Download Desktop Launcher (.EXE)</span>
+                  </button>
+                )}
+                {downloadCompleted === "windows" && (
+                  <p className="text-[10px] font-mono text-cyan-400 mt-2 text-center">✓ Executable saved successfully. Open to install on Windows.</p>
+                )}
+              </div>
+            </div>
+
+            {/* General PWA Install Block */}
+            <div className="bg-slate-900/50 border border-slate-850 p-6 rounded-3xl flex flex-col justify-between space-y-6 hover:border-slate-800 transition">
+              <div className="space-y-4">
+                <div className="h-12 w-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shadow-sm">
+                  <Download className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="font-display font-semibold text-white text-base">Instant Progressive App (PWA)</h4>
+                  <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                    Install instantly directly using your modern browser service worker without any external application markets or registries.
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                {downloadingPlatform === "ios" ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[10px] font-mono text-slate-400 uppercase">
+                      <span>Registering Service Worker...</span>
+                      <span>{downloadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden">
+                      <div className="bg-amber-400 h-1.5 rounded-full transition-all duration-100" style={{ width: `${downloadProgress}%` }}></div>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleSimulateDownload("ios")}
+                    className="w-full py-2.5 bg-slate-100 text-slate-950 hover:bg-white text-xs font-mono font-bold rounded-xl transition flex items-center justify-center space-x-2 cursor-pointer focus:outline-none"
+                  >
+                    <Download className="w-4 h-4 text-amber-600" />
+                    <span>Install Instant PWA Sandbox</span>
+                  </button>
+                )}
+                {downloadCompleted === "ios" && (
+                  <p className="text-[10px] font-mono text-amber-400 mt-2 text-center">✓ Client Service Worker online. App loaded onto home-screen.</p>
+                )}
+              </div>
+            </div>
+
           </div>
         </div>
       </section>

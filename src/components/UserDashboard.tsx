@@ -74,11 +74,24 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
   const [rewardsList, setRewardsList] = useState<RewardItem[]>([]);
   const [redeemSuccess, setRedeemSuccess] = useState<string | null>(null);
   const [expediteLoading, setExpediteLoading] = useState(false);
+
+  const [announcement, setAnnouncement] = useState("");
+  const [appName, setAppName] = useState("BYD Horizon Club");
   
   // Balance privacy/hashing state
   const [hideBalances, setHideBalances] = useState(() => {
     return localStorage.getItem("byd_hide_balances") === "true";
   });
+
+  const [guideStep, setGuideStep] = useState<number>(0);
+  const [guideFinished, setGuideFinished] = useState<boolean>(() => {
+    return localStorage.getItem("byd_guide_finished") === "true";
+  });
+
+  const handleFinishGuide = () => {
+    setGuideFinished(true);
+    localStorage.setItem("byd_guide_finished", "true");
+  };
 
   const handleToggleHideBalances = () => {
     setHideBalances(prev => {
@@ -258,6 +271,17 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
     fetch("/api/rewards/items")
       .then(res => res.json())
       .then(items => setRewardsList(items))
+      .catch(() => {});
+
+    // Fetch public brand customizations
+    fetch("/api/public/settings")
+      .then(res => res.json())
+      .then(settings => {
+        if (settings) {
+          if (settings.announcement) setAnnouncement(settings.announcement);
+          if (settings.app_name) setAppName(settings.app_name);
+        }
+      })
       .catch(() => {});
 
     // Browser Notification Permission Request
@@ -573,6 +597,18 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
         </div>
       )}
 
+      {/* Dynamic Global Announcement Banner */}
+      {announcement && (
+        <div className="mb-6 bg-amber-500/15 border border-amber-500/30 text-amber-300 rounded-2xl p-4 flex items-center gap-3 animate-fade-in shadow-lg">
+          <div className="p-1 px-2.5 bg-amber-500 text-black text-[9px] font-black uppercase rounded-lg tracking-widest leading-none font-mono flex items-center h-4.5 shrink-0 select-none">
+            NOTICE BROADCAST
+          </div>
+          <div className="text-xs font-sans font-semibold leading-relaxed flex-1">
+            {announcement}
+          </div>
+        </div>
+      )}
+
       {/* Header Dashboard panel */}
       <header className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 shadow-lg mb-8">
         <div>
@@ -717,6 +753,168 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
 
         {/* Dashboard Main display portal */}
         <div className="lg:col-span-9 space-y-6">
+
+          {/* Presidential Post-KYC First-time Onboarding Guide */}
+          {data && data.user && data.user.kyc_status === "verified" && !guideFinished && (
+            <div className="bg-slate-900 border border-emerald-500/30 rounded-3xl p-6 relative overflow-hidden shadow-xl animate-fade-in text-left">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500" />
+              
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-slate-800 mb-5">
+                <div className="flex items-center space-x-2.5">
+                  <div className="bg-emerald-500/10 p-1.5 rounded-lg border border-emerald-500/30 text-emerald-400 flex items-center justify-center h-8 w-8">
+                    <CheckCircle className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white uppercase tracking-tight font-display flex items-center space-x-1.5">
+                      <span>✓ BIOMETRIC CLEARANCE PASSED</span>
+                      <span className="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 py-0.5 px-2 rounded-full font-mono">Verified Member</span>
+                    </h4>
+                    <p className="text-[10px] text-slate-400 font-mono">Horizon Club Telematics Network Walkthrough Guide</p>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={handleFinishGuide}
+                  className="text-[10px] font-mono text-slate-400 hover:text-white transition uppercase hover:underline cursor-pointer"
+                >
+                  Dismiss Guide ✕
+                </button>
+              </div>
+
+              {/* Bento style guided content */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
+                
+                {/* Step options navigation (left) */}
+                <div className="md:col-span-4 flex flex-col space-y-2">
+                  <span className="text-[9px] uppercase font-mono tracking-widest text-slate-500 font-bold block mb-1">Guided Explorer</span>
+                  
+                  <button 
+                    onClick={() => setGuideStep(0)}
+                    className={`py-2 px-3 text-left rounded-xl text-xs font-mono font-semibold transition cursor-pointer ${guideStep === 0 ? "bg-slate-950 border border-emerald-500/30 text-emerald-400" : "bg-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800"}`}
+                  >
+                    1. 📍 Tracking Maps
+                  </button>
+
+                  <button 
+                    onClick={() => setGuideStep(1)}
+                    className={`py-2 px-3 text-left rounded-xl text-xs font-mono font-semibold transition cursor-pointer ${guideStep === 1 ? "bg-slate-950 border border-emerald-500/30 text-emerald-400" : "bg-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800"}`}
+                  >
+                    2. 📹 HD Webcams
+                  </button>
+
+                  <button 
+                    onClick={() => setGuideStep(2)}
+                    className={`py-2 px-3 text-left rounded-xl text-xs font-mono font-semibold transition cursor-pointer ${guideStep === 2 ? "bg-slate-950 border border-emerald-500/30 text-emerald-400" : "bg-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800"}`}
+                  >
+                    3. 💎 Claim & Rewards
+                  </button>
+
+                  <button 
+                    onClick={() => setGuideStep(3)}
+                    className={`py-2 px-3 text-left rounded-xl text-xs font-mono font-semibold transition cursor-pointer ${guideStep === 3 ? "bg-slate-950 border border-emerald-500/30 text-emerald-400" : "bg-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800"}`}
+                  >
+                    4. 💼 Secure Settlement
+                  </button>
+                </div>
+
+                {/* Active step display panel (right) */}
+                <div className="md:col-span-8 bg-slate-950 border border-slate-850 p-5 rounded-2xl flex flex-col justify-between space-y-4">
+                  {guideStep === 0 && (
+                    <div className="space-y-2 animate-fade-in">
+                      <span className="text-[9px] font-mono text-emerald-400 uppercase tracking-widest">MODULE STATE 01</span>
+                      <h5 className="font-display font-bold text-[#F5F5F0] text-sm flex items-center gap-1.5">
+                        <span>Interactive Global Tracking Map Terminal</span>
+                      </h5>
+                      <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                        Your container freighter status is updated live via real-time satellite GPS systems. You can locate vehicle transits accurately from original loading ports right down to your regional custom clearing yards.
+                      </p>
+                      <div className="text-[10px] p-2 bg-slate-900 border border-slate-850 rounded-xl leading-relaxed text-slate-400 font-mono">
+                        💡 Click <strong className="text-white">"Expedite Logistics Node"</strong> to bypass cargo delays or clearance holds using Points or settle top-up dues of $49 USDT.
+                      </div>
+                    </div>
+                  )}
+
+                  {guideStep === 1 && (
+                    <div className="space-y-2 animate-fade-in">
+                      <span className="text-[9px] font-mono text-cyan-400 uppercase tracking-widest">MODULE STATE 02</span>
+                      <h5 className="font-display font-bold text-[#F5F5F0] text-sm flex items-center gap-1.5">
+                        <span>High-Definition Harbor Telepresence Grid</span>
+                      </h5>
+                      <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                        Complete remote telepresence connects you straight into our deep-water loading harbors, custom holding facilities, and regional distribution hub yards. Watch electric vehicle transits securely.
+                      </p>
+                      <div className="text-[10px] p-2 bg-slate-900 border border-slate-850 rounded-xl leading-relaxed text-slate-400 font-mono">
+                        💡 Switch between harbor feeds and deck cameras on the <strong className="text-white">"Live Telepresence Grid"</strong> menu.
+                      </div>
+                    </div>
+                  )}
+
+                  {guideStep === 2 && (
+                    <div className="space-y-2 animate-fade-in">
+                      <span className="text-[9px] font-mono text-amber-400 uppercase tracking-widest">MODULE STATE 03</span>
+                      <h5 className="font-display font-bold text-[#F5F5F0] text-sm flex items-center gap-1.5">
+                        <span>Horizon Points Claim & Redemption Hub</span>
+                      </h5>
+                      <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                        Earn 10 dynamic Horizon Points on every dollar spent. Convert these anytime inside our premium catalogs for zero-fee lifestyles, performance upgrades, accessories, or escrow top-ups.
+                      </p>
+                      <div className="text-[10px] p-2 bg-slate-900 border border-slate-850 rounded-xl leading-relaxed text-slate-400 font-mono">
+                        💡 Go to the <strong className="text-white">"Points Rewards Store"</strong> to browse list of claimable logistics items directly.
+                      </div>
+                    </div>
+                  )}
+
+                  {guideStep === 3 && (
+                    <div className="space-y-2 animate-fade-in">
+                      <span className="text-[9px] font-mono text-purple-400 uppercase tracking-widest">MODULE STATE 04</span>
+                      <h5 className="font-display font-bold text-[#F5F5F0] text-sm flex items-center gap-1.5">
+                        <span>Secured Escrow & Customs Top-ups</span>
+                      </h5>
+                      <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                        Add liquidity top-up balances seamlessly inside the secured SQLite ledger using your encrypted wallet addresses (USDT TRC20/ERC20). All transactions are fully hashed inside the audit database columns.
+                      </p>
+                      <div className="text-[10px] p-2 bg-slate-900 border border-slate-850 rounded-xl leading-relaxed text-slate-400 font-mono">
+                        💡 Provide your <strong className="text-white">Crypto Wallet Address</strong> inside Settings to enable fast, secure payouts and claim credits.
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center pt-3 border-t border-slate-900">
+                    <button 
+                      disabled={guideStep === 0}
+                      onClick={() => setGuideStep(p => p - 1)}
+                      className="px-3 py-1 bg-slate-900 border border-slate-850 text-slate-400 hover:text-white rounded-lg text-[10px] font-mono disabled:opacity-40 select-none cursor-pointer"
+                    >
+                      ◀ Previous
+                    </button>
+
+                    <div className="flex gap-1 select-none">
+                      {[0, 1, 2, 3].map(idx => (
+                        <span key={idx} className={`w-1.5 h-1.5 rounded-full transition-all ${idx === guideStep ? "bg-emerald-400 w-3" : "bg-slate-700"}`} />
+                      ))}
+                    </div>
+
+                    {guideStep === 3 ? (
+                      <button 
+                        onClick={handleFinishGuide}
+                        className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-black rounded-lg text-[10px] font-mono font-bold select-none cursor-pointer"
+                      >
+                        Finish Guide ✓
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => setGuideStep(p => p + 1)}
+                        className="px-3 py-1 bg-slate-900 border border-slate-850 text-slate-400 hover:text-white rounded-lg text-[10px] font-mono select-none cursor-pointer"
+                      >
+                        Next Step ▶
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
 
           {/* Prominent Compliance KYC Alert-Disruptor & Wizard */}
           {data && data.user && data.user.kyc_status !== "verified" && (

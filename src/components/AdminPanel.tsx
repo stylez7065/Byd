@@ -22,7 +22,14 @@ import {
   Award,
   Settings,
   EyeOff,
-  Sliders
+  Sliders,
+  Terminal,
+  Send,
+  Phone,
+  MessageSquare,
+  Mail,
+  HelpCircle,
+  Megaphone
 } from "lucide-react";
 
 interface AdminPanelProps {
@@ -45,13 +52,28 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
   // Custom global Settings states
   const [appName, setAppName] = useState("");
   const [escrowWallet, setEscrowWallet] = useState("");
+  const [supportPhone, setSupportPhone] = useState("");
+  const [supportTelegram, setSupportTelegram] = useState("");
+  const [supportEmail, setSupportEmail] = useState("");
+  const [announcement, setAnnouncement] = useState("");
+  const [themeColor, setThemeColor] = useState("matte-charcoal");
+  const [allowClaims, setAllowClaims] = useState(true);
   const [settingsSuccess, setSettingsSuccess] = useState("");
   const [settingsError, setSettingsError] = useState("");
+
+  // AI Command terminal states
+  const [aiCommand, setAiCommand] = useState("");
+  const [aiSuccess, setAiSuccess] = useState("");
+  const [aiError, setAiError] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
 
   // Edit User details cabinet states
   const [editingUser, setEditingUser] = useState<any | null>(null);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editCity, setEditCity] = useState("");
+  const [editWallet, setEditWallet] = useState("");
   const [editKycStatus, setEditKycStatus] = useState("");
   const [editIsIncognito, setEditIsIncognito] = useState(false);
   const [editPoints, setEditPoints] = useState(0);
@@ -103,6 +125,12 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
         const settings = await resS.json();
         setAppName(settings.app_name || "BYD Horizon Club");
         setEscrowWallet(settings.escrow_wallet || "");
+        setSupportPhone(settings.support_phone || "+1 (888) 555-BYD0");
+        setSupportTelegram(settings.support_telegram || "https://t.me/byd_horizon_support");
+        setSupportEmail(settings.support_email || "vip-compliance@byd-horizon.club");
+        setAnnouncement(settings.announcement || "");
+        setThemeColor(settings.theme_color || "matte-charcoal");
+        setAllowClaims(settings.allow_claims !== false);
       }
     } catch (err) {
       console.error("Failed to sync Admin Console telemetry data", err);
@@ -697,6 +725,9 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                                 setEditIsIncognito(!!u.is_incognito);
                                 setEditPoints(u.horizon_points || 0);
                                 setEditStatus(u.status || "active");
+                                setEditPhone(u.phone || "");
+                                setEditCity(u.city || "");
+                                setEditWallet(u.crypto_wallet_address || "");
                                 setEditResponseSuccess("");
                                 setEditResponseError("");
                               }}
@@ -728,6 +759,9 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                                   setEditIsIncognito(!!u.is_incognito);
                                   setEditPoints(u.horizon_points || 0);
                                   setEditStatus(u.status || "active");
+                                  setEditPhone(u.phone || "");
+                                  setEditCity(u.city || "");
+                                  setEditWallet(u.crypto_wallet_address || "");
                                   setEditResponseSuccess("");
                                   setEditResponseError("");
                                 }}
@@ -994,91 +1028,309 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
         {/* =============== TAB 4: BRAND SETTINGS & ESCROW GLOBAL CUSTOMIZATION =============== */}
         {activeTab === "settings" && (
           <div className="space-y-6 animate-fade-in text-slate-100 text-left">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-10 space-y-8 shadow-xl">
-              <div>
-                <h4 className="font-display font-extrabold text-lg text-white tracking-tight flex items-center gap-2">
-                  <Settings className="w-5 h-5 text-amber-400" />
-                  <span>System Brand Customize Matrix & Global Escrow</span>
-                </h4>
-                <p className="text-xs text-slate-400 mt-1">
-                  Rebrand the interface variables in real-time. Configure the primary escrow deposit receipt wallet address below.
-                </p>
+            
+            {/* Presidential AI Override Terminal Bar */}
+            <div className="bg-gradient-to-r from-slate-900 via-[#18181c] to-[#121215] border border-cyan-500/20 rounded-3xl p-6 sm:p-8 space-y-4 shadow-xl relative overflow-hidden">
+              <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+              
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h4 className="font-display font-extrabold text-lg text-white tracking-tight flex items-center gap-2">
+                    <Terminal className="w-5 h-5 text-cyan-400 animate-pulse" />
+                    <span className="uppercase font-mono tracking-wide text-cyan-300">Executive AI Control Command Deck</span>
+                  </h4>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-normal font-sans">
+                    Use your voice of authority. Tell the AI Commander exactly how to align support compliance info, announcements, tickers, colors, or look & feel.
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 self-start sm:self-center">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                  <span className="text-[9px] uppercase font-mono tracking-widest text-emerald-400 font-bold bg-emerald-550/15 px-2 py-0.5 rounded border border-emerald-500/10">Neural Node Connected</span>
+                </div>
               </div>
 
-              <form 
+              <form
                 onSubmit={async (e) => {
                   e.preventDefault();
-                  setSettingsSuccess("");
-                  setSettingsError("");
+                  if (!aiCommand.trim() || aiLoading) return;
+                  setAiLoading(true);
+                  setAiSuccess("");
+                  setAiError("");
                   try {
-                    const res = await fetch("/api/admin/settings", {
+                    const resAI = await fetch("/api/admin/ai-command", {
                       method: "POST",
-                      headers: { 
+                      headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${adminToken}`
                       },
-                      body: JSON.stringify({
-                        app_name: appName,
-                        escrow_wallet: escrowWallet
-                      })
+                      body: JSON.stringify({ command: aiCommand })
                     });
-                    const json = await res.json();
-                    if (res.ok) {
-                      setSettingsSuccess("🎉 Global app parameters successfully saved! Live users will see these brand customization choices instantly.");
-                      loadMetrics();
+                    const jsonAI = await resAI.json();
+                    if (resAI.ok) {
+                      setAiSuccess(jsonAI.explanation || "System customized successfully!");
+                      // Refresh metrics
+                      const resS = await fetch("/api/public/settings");
+                      if (resS.ok) {
+                        const settings = await resS.json();
+                        setAppName(settings.app_name || "BYD Horizon Club");
+                        setEscrowWallet(settings.escrow_wallet || "");
+                        setSupportPhone(settings.support_phone || "+1 (888) 555-BYD0");
+                        setSupportTelegram(settings.support_telegram || "https://t.me/byd_horizon_support");
+                        setSupportEmail(settings.support_email || "vip-compliance@byd-horizon.club");
+                        setAnnouncement(settings.announcement || "");
+                        setThemeColor(settings.theme_color || "matte-charcoal");
+                        setAllowClaims(settings.allow_claims !== false);
+                      }
+                      setAiCommand("");
                     } else {
-                      setSettingsError(json.error || "Failed to update configurations.");
+                      setAiError(jsonAI.error || "Execution matrices bounds faulted.");
                     }
                   } catch {
-                    setSettingsError("Matrix link exception.");
+                    setAiError("Connection linkage lost with executive API server.");
+                  } finally {
+                    setAiLoading(false);
                   }
                 }}
-                className="space-y-6"
+                className="mt-4 space-y-3"
               >
-                {settingsSuccess && (
-                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl text-xs font-sans">
-                    {settingsSuccess}
-                  </div>
-                )}
-                {settingsError && (
-                  <div className="p-4 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-xs font-mono">
-                    ⚠️ Error: {settingsError}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1.5">
-                    <label className="block text-[10px] text-slate-450 uppercase font-mono tracking-widest font-black">Application Name</label>
-                    <input 
-                      required
-                      type="text"
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 px-4 text-xs text-white focus:outline-none focus:border-amber-500 transition font-sans font-semibold"
-                      value={appName}
-                      onChange={e => setAppName(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="block text-[10px] text-slate-450 uppercase font-mono tracking-widest font-black">Escrow Wallet Deposit Recipient</label>
-                    <input 
-                      type="text"
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 px-4 text-xs text-white font-mono focus:outline-none focus:border-amber-500 transition"
-                      placeholder="e.g., TRX Address or ERC20 (Leave blank for standard randomized dynamic generation)"
-                      value={escrowWallet}
-                      onChange={e => setEscrowWallet(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-2 flex justify-end">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    disabled={aiLoading}
+                    className="flex-1 bg-slate-950 border border-slate-800 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/40 rounded-xl py-3 px-4 text-xs font-mono text-white placeholder-slate-600 outline-none transition"
+                    placeholder="e.g., 'Rebrand to Horizon Peak V8, set support phone to +44 77 1234 5678 and set theme to light mode'"
+                    value={aiCommand}
+                    onChange={(e) => setAiCommand(e.target.value)}
+                  />
                   <button
                     type="submit"
-                    className="p-3 px-6 bg-amber-500 hover:bg-amber-400 text-black font-semibold text-xs rounded-xl transition shadow-lg shadow-amber-500/10 cursor-pointer uppercase font-mono tracking-wider font-extrabold"
+                    disabled={aiLoading || !aiCommand.trim()}
+                    className="bg-cyan-500 hover:bg-cyan-400 disabled:opacity-40 text-black px-5 rounded-xl font-bold font-mono text-xs flex items-center justify-center gap-2 transition cursor-pointer"
                   >
-                    Commit Settings State Shield
+                    {aiLoading ? "PROCESSING..." : "EXECUTE"}
+                    <Send className="w-3.5 h-3.5" />
                   </button>
                 </div>
+
+                {aiSuccess && (
+                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-xl text-[11px] font-mono leading-relaxed max-w-full">
+                    🛸 <span className="font-bold text-emerald-400">AI Response:</span> {aiSuccess}
+                  </div>
+                )}
+                {aiError && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-300 rounded-xl text-[11px] font-mono leading-relaxed max-w-full">
+                    ⚠️ <span className="font-bold text-red-400">Exception:</span> {aiError}
+                  </div>
+                )}
               </form>
+            </div>
+
+            {/* Presidential Villa Bento Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* BRANDING CARD (BENTO GRID 1) */}
+              <div className="bg-[#121215] border border-slate-850 p-6 rounded-3xl space-y-5 shadow-lg lg:col-span-1">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-mono text-xs font-extrabold uppercase tracking-widest text-[#eaeaea]">System Identity & Look</h5>
+                    <p className="text-[10px] text-slate-500">Live app branding presets.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-[9px] text-slate-450 uppercase font-mono tracking-wider block font-bold">App Brand Name</label>
+                    <input
+                      type="text"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-xs text-white uppercase outline-none focus:border-amber-500 transition font-sans font-semibold"
+                      value={appName}
+                      onChange={(e) => setAppName(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] text-slate-450 uppercase font-mono tracking-wider block font-bold">Color Palette Theme</label>
+                    <select
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-xs text-white outline-none focus:border-amber-500 cursor-pointer"
+                      value={themeColor}
+                      onChange={(e) => setThemeColor(e.target.value)}
+                    >
+                      <option value="matte-charcoal">Matte Ash Black/Titanium (Matured Dark)</option>
+                      <option value="light">Premium Matte Ash White (Matured Light)</option>
+                    </select>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800/80 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-slate-400 uppercase font-semibold">Enable Horizon Claims</span>
+                      <button
+                        type="button"
+                        onClick={() => setAllowClaims(!allowClaims)}
+                        className={`relative inline-flex h-4 w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          allowClaims ? "bg-cyan-500" : "bg-slate-800"
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                            allowClaims ? "translate-x-4" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    <p className="text-[9px] text-slate-500 font-sans leading-normal">Allows members to declare daily rewards and referrals.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* DYNAMIC CONTACT INFO OVERRIDES (BENTO GRID 2) */}
+              <div className="bg-[#121215] border border-slate-850 p-6 rounded-3xl space-y-5 shadow-lg lg:col-span-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 bg-cyan-500/10 text-cyan-400 rounded-xl border border-cyan-500/20">
+                      <Phone className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h5 className="font-mono text-xs font-extrabold uppercase tracking-widest text-[#eaeaea]">Dynamic Support Interventions</h5>
+                      <p className="text-[10px] text-slate-500">Bypass manual agents. Configure direct help channels with precision.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[9px] text-slate-450 uppercase font-mono tracking-wider block font-bold">Support Hotline</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-550" />
+                      <input
+                        type="text"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 pl-9 pr-3 text-xs text-white outline-none focus:border-cyan-500 transition"
+                        placeholder="+1 (888) 555-BYD0"
+                        value={supportPhone}
+                        onChange={(e) => setSupportPhone(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] text-slate-450 uppercase font-mono tracking-wider block font-bold">Compliance Telegram Link</label>
+                    <div className="relative">
+                      <MessageSquare className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-550" />
+                      <input
+                        type="text"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 pl-9 pr-3 text-xs text-white outline-none focus:border-cyan-500 transition"
+                        placeholder="https://t.me/byd_horizon_support"
+                        value={supportTelegram}
+                        onChange={(e) => setSupportTelegram(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="col-span-1 sm:col-span-2 space-y-1">
+                    <label className="text-[9px] text-slate-450 uppercase font-mono tracking-wider block font-bold">Corporate Support Email</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-550" />
+                      <input
+                        type="email"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 pl-9 pr-3 text-xs text-white outline-none focus:border-cyan-500 transition"
+                        placeholder="vip-compliance@byd-horizon.club"
+                        value={supportEmail}
+                        onChange={(e) => setSupportEmail(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="col-span-1 sm:col-span-2 space-y-1">
+                    <label className="text-[9px] text-slate-450 uppercase font-mono tracking-wider block font-bold">Escrow Deposit Recipient Wallet (Global Override)</label>
+                    <input
+                      type="text"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-xs text-white font-mono outline-none focus:border-cyan-500 transition"
+                      placeholder="TRX Address or ERC20 (Standard dynamic allocation if empty)"
+                      value={escrowWallet}
+                      onChange={(e) => setEscrowWallet(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* ANNOUNCEMENTS BROADCAST MATRIX (BENTO GRID 3) */}
+              <div className="bg-[#121215] border border-slate-850 p-6 rounded-3xl space-y-5 shadow-lg lg:col-span-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
+                    <Megaphone className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-mono text-xs font-extrabold uppercase tracking-widest text-[#eaeaea]">Global Broadcast Announcement Ticker</h5>
+                    <p className="text-[10px] text-slate-500">Live banners pushed instantly to all client side dashboards.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <textarea
+                    rows={2}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500 transition font-sans leading-relaxed"
+                    placeholder="e.g., 'MEMBERS NOTICE: System maintenance undergoes weekly synchronized sync...' "
+                    value={announcement}
+                    onChange={(e) => setAnnouncement(e.target.value)}
+                  />
+
+                  <div className="flex justify-end gap-3 pt-1">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setSettingsSuccess("");
+                        setSettingsError("");
+                        try {
+                          const resCommit = await fetch("/api/admin/settings", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              "Authorization": `Bearer ${adminToken}`
+                            },
+                            body: JSON.stringify({
+                              app_name: appName,
+                              escrow_wallet: escrowWallet,
+                              support_phone: supportPhone,
+                              support_telegram: supportTelegram,
+                              support_email: supportEmail,
+                              announcement,
+                              theme_color: themeColor,
+                              allow_claims: allowClaims
+                            })
+                          });
+                          const resJson = await resCommit.json();
+                          if (resCommit.ok) {
+                            setSettingsSuccess("🎉 Presidential Villa Parameter Override Commits successfully saved to database!");
+                            // Refresh metrics
+                            loadMetrics();
+                          } else {
+                            setSettingsError(resJson.error || "Failed override.");
+                          }
+                        } catch {
+                          setSettingsError("Link breakdown exception.");
+                        }
+                      }}
+                      className="px-6 py-3 bg-[#1d1d22] hover:bg-[#282830] text-slate-100 font-bold text-xs uppercase tracking-wider rounded-xl transition border border-slate-850 cursor-pointer"
+                    >
+                      Commit Parameters Override
+                    </button>
+                  </div>
+
+                  {settingsSuccess && (
+                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-xs font-sans mt-2">
+                      {settingsSuccess}
+                    </div>
+                  )}
+                  {settingsError && (
+                    <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-xs font-mono mt-2">
+                      ⚠️ Error: {settingsError}
+                    </div>
+                  )}
+                </div>
+              </div>
+
             </div>
           </div>
         )}
@@ -1121,6 +1373,9 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                       body: JSON.stringify({
                         name: editName,
                         email: editEmail,
+                        phone: editPhone,
+                        city: editCity,
+                        crypto_wallet_address: editWallet,
                         kyc_status: editKycStatus,
                         is_incognito: editIsIncognito
                       })
@@ -1172,7 +1427,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
+                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="block text-[9px] text-slate-400 uppercase tracking-widest font-black">Legal Name</label>
                     <input 
@@ -1215,6 +1470,39 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-xs text-white outline-none focus:border-cyan-500"
                       value={editPoints}
                       onChange={e => setEditPoints(Number(e.target.value))}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[9px] text-slate-400 uppercase tracking-widest font-black">Phone Number</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-xs text-white outline-none focus:border-cyan-500"
+                      placeholder="N/A"
+                      value={editPhone}
+                      onChange={e => setEditPhone(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[9px] text-slate-400 uppercase tracking-widest font-black">Reg. City / Fleet Hub</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-xs text-white outline-none focus:border-cyan-500"
+                      placeholder="N/A"
+                      value={editCity}
+                      onChange={e => setEditCity(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="col-span-2 space-y-1">
+                    <label className="block text-[9px] text-slate-400 uppercase tracking-widest font-black">Crypto Address / Escrow Tag</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-xs text-white font-mono outline-none focus:border-cyan-500"
+                      placeholder="0x..."
+                      value={editWallet}
+                      onChange={e => setEditWallet(e.target.value)}
                     />
                   </div>
                 </div>
