@@ -333,6 +333,28 @@ export async function getDb() {
       FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
     );
 
+    CREATE TABLE IF NOT EXISTS recommendation_claims (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      occasion_type TEXT NOT NULL,
+      price_paid REAL NOT NULL,
+      claimed_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS charity_donations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      charity_id TEXT NOT NULL,
+      charity_name TEXT NOT NULL,
+      amount REAL NOT NULL,
+      currency TEXT DEFAULT 'USDT',
+      tx_hash TEXT NOT NULL,
+      donor_note TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    );
+
     CREATE TABLE IF NOT EXISTS ads (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,

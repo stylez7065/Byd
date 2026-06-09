@@ -679,6 +679,15 @@ app.get("/api/dashboard/summary", authenticateUser, async (req: any, res) => {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
 
+  const recClaims = await db.all("SELECT * FROM recommendation_claims WHERE user_id = ?", [req.user.id]);
+  const donations = await db.all("SELECT * FROM charity_donations WHERE user_id = ? ORDER BY id DESC", [req.user.id]);
+  const allDonationsList = await db.all(
+    `SELECT cd.*, u.name as donor_name, u.city as donor_city 
+     FROM charity_donations cd 
+     JOIN users u ON cd.user_id = u.id 
+     ORDER BY cd.id DESC`
+  );
+
   res.json({
     user: {
       id: req.user.id,
@@ -722,7 +731,10 @@ app.get("/api/dashboard/summary", authenticateUser, async (req: any, res) => {
       estimatedEarnings,
       withdrawable: withdrawableCheck
     },
-    leaderboard: fullLeaderboard
+    leaderboard: fullLeaderboard,
+    recommendation_claims: recClaims || [],
+    charity_donations: donations || [],
+    all_donations: allDonationsList || []
   });
 });
 
@@ -2200,7 +2212,10 @@ app.get("/api/public/settings", async (req, res) => {
     support_email: "vip-compliance@byd-horizon.club",
     announcement: "WELCOME CO-OWNER: Real-time telemetry monitoring node sequence is running smoothly.",
     theme_color: "matte-charcoal",
-    allow_claims: true
+    allow_claims: true,
+    rec_occasion_a_price: 149,
+    rec_occasion_b_price: 99,
+    rec_prices_updated_at: "2026-06-09T00:00:00.000Z"
   };
   if (fs.existsSync(SETTINGS_FILE)) {
     try {
@@ -2212,7 +2227,19 @@ app.get("/api/public/settings", async (req, res) => {
 });
 
 app.post("/api/admin/settings", authenticateAdmin, async (req, res) => {
-  const { app_name, escrow_wallet, support_phone, support_telegram, support_email, announcement, theme_color, allow_claims } = req.body;
+  const { 
+    app_name, 
+    escrow_wallet, 
+    support_phone, 
+    support_telegram, 
+    support_email, 
+    announcement, 
+    theme_color, 
+    allow_claims,
+    rec_occasion_a_price,
+    rec_occasion_b_price,
+    rec_prices_updated_at 
+  } = req.body;
   if (!app_name || typeof app_name !== "string" || app_name.trim().length === 0) {
     return res.status(400).json({ error: "Application name must be a valid non-empty string value." });
   }
@@ -2224,11 +2251,14 @@ app.post("/api/admin/settings", authenticateAdmin, async (req, res) => {
     support_email: support_email || "vip-compliance@byd-horizon.club",
     announcement: announcement || "",
     theme_color: theme_color || "matte-charcoal",
-    allow_claims: allow_claims !== false
+    allow_claims: allow_claims !== false,
+    rec_occasion_a_price: Number(rec_occasion_a_price) !== NaN && rec_occasion_a_price !== undefined ? Number(rec_occasion_a_price) : 149,
+    rec_occasion_b_price: Number(rec_occasion_b_price) !== NaN && rec_occasion_b_price !== undefined ? Number(rec_occasion_b_price) : 99,
+    rec_prices_updated_at: rec_prices_updated_at || new Date().toISOString()
   };
   try {
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), "utf8");
-    await logAdminAction(`Modified Global Settings: Brand Name to '${app_name}', Support Phone: '${support_phone}', Email: '${support_email}'`);
+    await logAdminAction(`Modified Global Settings: Brand Name to '${app_name}', Rec Price A: '${settings.rec_occasion_a_price}', Rec Price B: '${settings.rec_occasion_b_price}'`);
     res.json({ success: true, ...settings });
   } catch (err: any) {
     res.status(500).json({ error: "Failed to save settings: " + err.message });
