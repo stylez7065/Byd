@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MapPin, Users, Heart, Gift, ExternalLink, ShieldCheck, MailWarning, Compass, ShieldAlert, Copy, RefreshCw, Eye, EyeOff, Award, CheckCircle, Clock, Lock, Video, Flame, Shield, Monitor, Camera, Wallet, CreditCard, ArrowUpRight, Ship, Anchor, Upload, FileText, Settings } from "lucide-react";
+import { MapPin, Users, Heart, Gift, ExternalLink, ShieldCheck, MailWarning, Compass, ShieldAlert, Copy, RefreshCw, Eye, EyeOff, Award, CheckCircle, Clock, Lock, Video, Flame, Shield, Monitor, Camera, Wallet, CreditCard, ArrowUpRight, Ship, Anchor, Upload, FileText, Settings, Download } from "lucide-react";
 import { DashboardData, RewardItem } from "../types";
 
 // Import new modular custom elements
@@ -1195,7 +1195,7 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
           {activeTab === "tracking" && (
             <div className="space-y-6">
               {/* Vehicle configuration hold summaries */}
-              {data.activeVehicle ? (
+              {data.activeVehicle || data.tracking ? (
                 <div className="space-y-6">
                   {/* Real-time Delay Banner alerts custom module */}
                   <DelayBanner
@@ -1210,7 +1210,9 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
                       <div>
                         <span className="text-[10px] uppercase font-mono tracking-wider text-blue-400 bg-blue-950/40 px-2 py-0.5 rounded border border-blue-500/30">In Transit Cargo</span>
-                        <h3 className="font-display font-semibold text-lg sm:text-xl text-white mt-1">{data.activeVehicle.model}</h3>
+                        <h3 className="font-display font-semibold text-lg sm:text-xl text-white mt-1">
+                          {data.activeVehicle ? data.activeVehicle.model : "Horizon Secured Reward Package"}
+                        </h3>
                         <p className="text-xs text-slate-400 mt-0.5 leading-relaxed font-mono">
                           Global serial index: <span className="text-slate-300">#BYD-{data.user.id * 13}-HN</span>
                         </p>
@@ -1219,9 +1221,9 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
                       <div className="text-right sm:border-l sm:border-slate-800 sm:pl-6 max-w-sm">
                         <span className="text-[10px] text-slate-500 uppercase font-mono font-semibold">Standard Scheduled Porting</span>
                         <span className="text-base sm:text-lg font-bold text-slate-300 font-mono block mt-0.5">
-                          {data.activeVehicle.expectedDeliveryDate} 
+                          {data.activeVehicle ? data.activeVehicle.expectedDeliveryDate : "4-6 Business Days"} 
                           {data.tracking && data.tracking.delays_encountered > 0 && !data.tracking.expedite_paid && (
-                            <span className="text-[11px] text-orange-400 block sm:inline font-bold"> ★ Delayed</span>
+                            <span className="text-[11px] text-orange-400 block sm:inline font-bold font-semibold"> ★ Delayed</span>
                           )}
                         </span>
                         <span className="text-[10px] text-slate-400 leading-normal block italic mt-1 font-mono">Due to logistics grid congestions, expected carrier arrival dates shift.</span>
@@ -1230,121 +1232,160 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
                   </div>
 
                   {/* Co-ownership Installment Ledger */}
-                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800/60 pb-4">
-                      <div>
-                        <h4 className="font-display font-semibold text-xs text-slate-100 uppercase tracking-widest font-mono">Active Co-ownership Dues Ledger</h4>
-                        <p className="text-[11px] text-slate-400 mt-1 leading-normal">
-                          Track your monthly cryptocurrency fulfillment schedule and security statuses below.
-                        </p>
-                      </div>
-                      <div className="text-right font-mono mt-2 sm:mt-0">
-                        <span className="text-[10px] text-slate-500 uppercase block">Fulfillment Ratio</span>
-                        <span className="text-blue-400 font-bold text-sm">
-                          ${data.activeVehicle.totalPaid.toLocaleString()} / ${(data.activeVehicle.monthlyPayment * data.activeVehicle.installmentCount).toLocaleString()} USD
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="overflow-x-auto text-[11px] font-mono">
-                      <table className="w-full text-left text-slate-300">
-                        <thead className="bg-slate-950 border-b border-slate-800 text-slate-500">
-                          <tr>
-                            <th className="p-2">Settlement Index</th>
-                            <th className="p-2">Scheduled Due Date</th>
-                            <th className="p-2">Monthly Dues Settle</th>
-                            <th className="p-2 text-right">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-850">
-                          {Array.from({ length: Math.min(6, data.activeVehicle.installmentCount) }).map((_, i) => {
-                            const isFirst = i === 0;
-                            const indexNum = i + 1;
-                            const amountForThis = data.activeVehicle.monthlyPayment;
-                            const cumulNeeded = amountForThis * indexNum;
-                            let statusStr = "Pending";
-                            let statusColor = "text-slate-500";
-
-                            if (data.activeVehicle.totalPaid >= cumulNeeded) {
-                              statusStr = "Paid 🎉";
-                              statusColor = "text-emerald-400 font-bold";
-                            } else if (isFirst || data.activeVehicle.totalPaid >= cumulNeeded - amountForThis) {
-                              statusStr = "Due Now (Payable)";
-                              statusColor = "text-amber-400 font-bold animate-pulse";
-                            } else {
-                              statusStr = "Queued";
-                              statusColor = "text-slate-600";
-                            }
-
-                            // Calculate mock future calendar dates
-                            const mockDate = new Date(data.activeVehicle.expectedDeliveryDate);
-                            mockDate.setMonth(mockDate.getMonth() - Math.min(2, 6 - i)); // stagger
-                            
-                            return (
-                              <tr key={i} className="hover:bg-slate-950/20">
-                                <td className="p-2.5">
-                                  Dues {String(indexNum).padStart(2, "0")} 
-                                  {isFirst && <span className="text-[10px] bg-blue-500/10 text-blue-400 font-bold px-1.5 py-0.5 rounded border border-blue-500/20 ml-2">Downpayment</span>}
-                                </td>
-                                <td className="p-2.5 font-mono text-slate-400">{mockDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</td>
-                                <td className="p-2.5 font-bold text-white">${amountForThis.toFixed(2)} USDT</td>
-                                <td className={`p-2.5 text-right font-semibold ${statusColor}`}>{statusStr}</td>
-                              </tr>
-                            );
-                          })}
-                          {data.activeVehicle.installmentCount > 6 && (
-                            <tr>
-                              <td className="p-2 text-slate-500" colSpan={4}>+ {data.activeVehicle.installmentCount - 6} subsequent recurring months scheduled inside master registry ledger.</td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Pay subsequent button */}
-                    {data.activeVehicle.totalPaid < (data.activeVehicle.monthlyPayment * data.activeVehicle.installmentCount) && (
-                      <div className="pt-2 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-950/40 p-4 rounded-xl border border-slate-850/65 gap-4">
-                        <div className="flex items-center space-x-2 text-xs text-orange-400 font-bold max-w-md">
-                          <MailWarning className="w-5 h-5 flex-shrink-0" />
-                          <span>Attention: Timely monthly installment settlement is strictly required to hold active logistics priority.</span>
+                  {data.activeVehicle ? (
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800/60 pb-4">
+                        <div>
+                          <h4 className="font-display font-semibold text-xs text-slate-100 uppercase tracking-widest font-mono">Active Co-ownership Dues Ledger</h4>
+                          <p className="text-[11px] text-slate-400 mt-1 leading-normal">
+                            Track your monthly cryptocurrency fulfillment schedule and security statuses below.
+                          </p>
                         </div>
-                        <button
-                          onClick={async () => {
-                            try {
-                              const res = await fetch("/api/payments/create", {
-                                method: "POST",
-                                headers: {
-                                  "Content-Type": "application/json",
-                                  "Authorization": `Bearer ${authToken}`
-                                },
-                                body: JSON.stringify({
-                                  method: "crypto",
-                                  type: "installment",
-                                  amount: data!.activeVehicle!.monthlyPayment,
-                                  vehicleModel: data!.activeVehicle!.model,
-                                  monthlyInstallment: data!.activeVehicle!.monthlyPayment,
-                                  termMonths: data!.activeVehicle!.installmentCount
-                                })
-                              });
-                              const payData = await res.json();
-                              if (res.ok) {
-                                alert(`Subsequent monthly escrow wallet allocated!\n\nUSDT Deposit Address: ${payData.wallet_address}\nTransaction Memo: ${payData.transaction_hash}\n\nPay precisely $${data!.activeVehicle!.monthlyPayment} USDT. Your deposit will be fully audited and credited automatically.`);
-                                loadSummaryData();
-                              } else {
-                                alert(payData.error);
-                              }
-                            } catch {
-                              alert("Escrow setup connection failure.");
-                            }
-                          }}
-                          className="py-2 px-4 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 font-bold text-[10px] uppercase font-mono tracking-wider text-white rounded-lg shadow-lg shadow-emerald-950/20 transition flex items-center space-x-1"
-                        >
-                          <RefreshCw className="w-3.5 h-3.5 animate-spin-slow" />
-                          <span>Settle Monthly Dues Via Crypto</span>
-                        </button>
+                        <div className="text-right font-mono mt-2 sm:mt-0">
+                          <span className="text-[10px] text-slate-500 uppercase block">Fulfillment Ratio</span>
+                          <span className="text-blue-400 font-bold text-sm">
+                            ${data.activeVehicle.totalPaid.toLocaleString()} / ${(data.activeVehicle.monthlyPayment * data.activeVehicle.installmentCount).toLocaleString()} USD
+                          </span>
+                        </div>
                       </div>
-                    )}
-                  </div>
+
+                      <div className="overflow-x-auto text-[11px] font-mono">
+                        <table className="w-full text-left text-slate-300">
+                          <thead className="bg-slate-950 border-b border-slate-800 text-slate-500 font-bold">
+                            <tr>
+                              <th className="p-2">Settlement Index</th>
+                              <th className="p-2">Scheduled Due Date</th>
+                              <th className="p-2">Monthly Dues Settle</th>
+                              <th className="p-2 text-right">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-850">
+                            {Array.from({ length: Math.min(6, data.activeVehicle.installmentCount) }).map((_, i) => {
+                              const isFirst = i === 0;
+                              const indexNum = i + 1;
+                              const amountForThis = data.activeVehicle.monthlyPayment;
+                              const cumulNeeded = amountForThis * indexNum;
+                              let statusStr = "Pending";
+                              let statusColor = "text-slate-500";
+
+                              if (data.activeVehicle.totalPaid >= cumulNeeded) {
+                                statusStr = "Paid 🎉";
+                                statusColor = "text-emerald-400 font-bold";
+                              } else if (isFirst || data.activeVehicle.totalPaid >= cumulNeeded - amountForThis) {
+                                statusStr = "Due Now (Payable)";
+                                statusColor = "text-amber-400 font-bold animate-pulse";
+                              } else {
+                                statusStr = "Queued";
+                                statusColor = "text-slate-600";
+                              }
+
+                              // Calculate mock future calendar dates
+                              const mockDate = new Date(data.activeVehicle.expectedDeliveryDate);
+                              mockDate.setMonth(mockDate.getMonth() - Math.min(2, 6 - i)); // stagger
+                              
+                              return (
+                                <tr key={i} className="hover:bg-slate-950/20">
+                                  <td className="p-2.5">
+                                    Dues {String(indexNum).padStart(2, "0")} 
+                                    {isFirst && <span className="text-[10px] bg-blue-500/10 text-blue-400 font-bold px-1.5 py-0.5 rounded border border-blue-500/20 ml-2">Downpayment</span>}
+                                  </td>
+                                  <td className="p-2.5 font-mono text-slate-400">{mockDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                                  <td className="p-2.5 font-bold text-white">${amountForThis.toFixed(2)} USDT</td>
+                                  <td className={`p-2.5 text-right font-semibold ${statusColor}`}>{statusStr}</td>
+                                </tr>
+                              );
+                            })}
+                            {data.activeVehicle.installmentCount > 6 && (
+                              <tr>
+                                <td className="p-2 text-slate-500" colSpan={4}>+ {data.activeVehicle.installmentCount - 6} subsequent recurring months scheduled inside master registry ledger.</td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Pay subsequent button */}
+                      {data.activeVehicle.totalPaid < (data.activeVehicle.monthlyPayment * data.activeVehicle.installmentCount) && (
+                        <div className="pt-2 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-950/40 p-4 rounded-xl border border-slate-850/65 gap-4">
+                          <div className="flex items-center space-x-2 text-xs text-orange-400 font-bold max-w-md">
+                            <MailWarning className="w-5 h-5 flex-shrink-0" />
+                            <span>Attention: Timely monthly installment settlement is strictly required to hold active logistics priority.</span>
+                          </div>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const res = await fetch("/api/payments/create", {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                    "Authorization": `Bearer ${authToken}`
+                                  },
+                                  body: JSON.stringify({
+                                    method: "crypto",
+                                    type: "installment",
+                                    amount: data!.activeVehicle!.monthlyPayment,
+                                    vehicleModel: data!.activeVehicle!.model,
+                                    monthlyInstallment: data!.activeVehicle!.monthlyPayment,
+                                    termMonths: data!.activeVehicle!.installmentCount
+                                  })
+                                });
+                                const payData = await res.json();
+                                if (res.ok) {
+                                  alert(`Subsequent monthly escrow wallet allocated!\n\nUSDT Deposit Address: ${payData.wallet_address}\nTransaction Memo: ${payData.transaction_hash}\n\nPay precisely $${data!.activeVehicle!.monthlyPayment} USDT. Your deposit will be fully audited and credited automatically.`);
+                                  loadSummaryData();
+                                } else {
+                                  alert(payData.error);
+                                }
+                              } catch {
+                                alert("Escrow setup connection failure.");
+                              }
+                            }}
+                            className="py-2 px-4 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 font-bold text-[10px] uppercase font-mono tracking-wider text-white rounded-lg shadow-lg shadow-emerald-950/20 transition flex items-center space-x-1"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin-slow" />
+                            <span>Settle Monthly Dues Via Crypto</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800/60 pb-4">
+                        <div>
+                          <h4 className="font-display font-semibold text-xs text-slate-100 uppercase tracking-widest font-mono">Secured Reward Cargo Consignments</h4>
+                          <p className="text-[11px] text-slate-400 mt-1 leading-normal">
+                            All priority dispatched accessory rewards and hardware assets are listed inside this cargo transit grid.
+                          </p>
+                        </div>
+                        <div className="text-right font-mono mt-2 sm:mt-0">
+                          <span className="text-[10px] text-slate-500 uppercase block font-bold">Cargo Router Status</span>
+                          <span className="text-emerald-400 font-bold text-xs uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded">
+                            Active GPS Stream
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 font-mono text-[11px]">
+                        {data.redemptions && data.redemptions.filter(r => r.status === "Shipped").length > 0 ? (
+                          data.redemptions.filter(r => r.status === "Shipped").map((red, idx) => (
+                            <div key={idx} className="bg-slate-950 border border-slate-850 p-4 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                              <div className="space-y-1">
+                                <span className="font-bold text-slate-100 text-sm block">{red.item_name}</span>
+                                <span className="text-[10px] text-slate-500 block">ID: #{red.id} • Transit Route: {red.tracking_number}</span>
+                              </div>
+                              <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/35 rounded text-[9px] uppercase font-bold">
+                                🚚 In-transit Cargo
+                              </span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-6 text-xs text-slate-600 font-mono">
+                            No dispatch-cleared packages active. Settle cargo tariff below to trigger satellite updates any time.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Leaflet Simulated Maps Panel - Custom modular maps list */}
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg h-[460px] relative">
@@ -2182,6 +2223,53 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
                     </button>
                   </div>
                 </form>
+
+                {/* Aesthetic Bento-style App Client Downloads Option */}
+                <div className="mt-8 pt-8 border-t border-slate-800">
+                  <div className="bg-slate-950/60 border border-slate-850 p-6 rounded-2xl space-y-4">
+                    <div>
+                      <h4 className="text-white font-display font-semibold text-sm uppercase tracking-wide flex items-center gap-2">
+                        <Download className="w-4 h-4 text-cyan-400" />
+                        <span>Dedicated Mobile & Desktop Clients</span>
+                      </h4>
+                      <p className="text-slate-400 text-xs mt-1 leading-normal font-sans">
+                        For an optimal user experience with raw offline telemetrics, download the native club app directly onto your local environment.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <a
+                        href="/BYD_HorizonClub_Client.apk"
+                        download="BYD_HorizonClub_Client.apk"
+                        className="p-3 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl text-center group transition flex flex-col items-center justify-center cursor-pointer decoration-transparent"
+                        title="Download Android Package APK"
+                      >
+                        <span className="text-xs font-bold text-slate-200 group-hover:text-white font-mono uppercase tracking-wider block">Android Mobile</span>
+                        <span className="text-[9px] text-slate-500 mt-0.5 block font-mono">v1.1.2 • APK (42MB)</span>
+                      </a>
+
+                      <a
+                        href="/BYD_HorizonClub_Setup.msi"
+                        download="BYD_HorizonClub_Setup.msi"
+                        className="p-3 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl text-center group transition flex flex-col items-center justify-center cursor-pointer decoration-transparent"
+                        title="Download Microsoft Windows Client msi"
+                      >
+                        <span className="text-xs font-bold text-slate-200 group-hover:text-white font-mono uppercase tracking-wider block">Windows Desktop</span>
+                        <span className="text-[9px] text-slate-500 mt-0.5 block font-mono">v1.1.2 • MSI (114MB)</span>
+                      </a>
+
+                      <a
+                        href="/BYD_HorizonClub_iOS.mobileconfig"
+                        download="/BYD_HorizonClub_iOS.mobileconfig"
+                        className="p-3 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl text-center group transition flex flex-col items-center justify-center cursor-pointer decoration-transparent"
+                        title="Download iOS Mobile Config provisioning profile"
+                      >
+                        <span className="text-xs font-bold text-slate-200 group-hover:text-white font-mono uppercase tracking-wider block">iOS Configuration</span>
+                        <span className="text-[9px] text-slate-500 mt-0.5 block font-mono">v1.1.2 • Profile (2MB)</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}

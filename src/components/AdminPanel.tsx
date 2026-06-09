@@ -81,6 +81,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
   const [editResponseSuccess, setEditResponseSuccess] = useState("");
   const [editResponseError, setEditResponseError] = useState("");
   const [editLoading, setEditLoading] = useState(false);
+  const [editRouteIndex, setEditRouteIndex] = useState<number | "">("");
   
   // UI filter states
   const [loading, setLoading] = useState(false);
@@ -730,6 +731,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                                 setEditWallet(u.crypto_wallet_address || "");
                                 setEditResponseSuccess("");
                                 setEditResponseError("");
+                                setEditRouteIndex(u.route_index !== undefined && u.route_index !== null ? u.route_index : "");
                               }}
                               className="hover:underline flex items-center gap-1 cursor-pointer"
                               title="Modify points balance"
@@ -764,6 +766,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                                   setEditWallet(u.crypto_wallet_address || "");
                                   setEditResponseSuccess("");
                                   setEditResponseError("");
+                                  setEditRouteIndex(u.route_index !== undefined && u.route_index !== null ? u.route_index : "");
                                 }}
                                 className="p-1.5 bg-cyan-950/20 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-950/40 rounded-lg transition-all cursor-pointer"
                                 title="Configure Member Settings"
@@ -1399,6 +1402,21 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                     });
 
                     if (resPts.ok) {
+                      // Update tracking progress if updated
+                      if (editRouteIndex !== "") {
+                        await fetch("/api/admin/tracking/progress", {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${adminToken}`
+                          },
+                          body: JSON.stringify({
+                            user_id: editingUser.id,
+                            route_index: Number(editRouteIndex)
+                          })
+                        });
+                      }
+
                       setEditResponseSuccess("🎉 Member customization variables commit succeeded perfectly!");
                       setTimeout(() => {
                         setEditingUser(null);
@@ -1504,6 +1522,26 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                       value={editWallet}
                       onChange={e => setEditWallet(e.target.value)}
                     />
+                  </div>
+
+                  <div className="col-span-2 space-y-1">
+                    <label className="block text-[9px] text-slate-400 uppercase tracking-widest font-black">
+                      Active Transit Stage / Delivery GPS Progress (0 to 100 %)
+                    </label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="number"
+                        min="0"
+                        max="100"
+                        className="flex-1 bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-xs text-white outline-none focus:border-cyan-500 font-mono"
+                        placeholder="e.g. 10 (Pre-shipped is 0, Shipped is typically 10 to 99, 100 matches Delivered)"
+                        value={editRouteIndex}
+                        onChange={e => setEditRouteIndex(e.target.value === "" ? "" : Number(e.target.value))}
+                      />
+                      <div className="text-[10px] text-slate-400 bg-slate-950 px-3 py-2 border border-slate-850 rounded-xl leading-none flex items-center shrink-0">
+                        {editRouteIndex === "" || Number(editRouteIndex) === 0 ? "📍 Pre-shipped" : Number(editRouteIndex) >= 100 ? "🏁 Delivered" : `🚚 In-transit: ${editRouteIndex}%`}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
