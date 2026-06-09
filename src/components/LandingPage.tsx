@@ -643,6 +643,55 @@ export default function LandingPage({ onNavigate, charityAmount, setCharityAmoun
         </div>
       </section>
 
+      {/* WHY TRY BYD SECTION */}
+      <section className="bg-slate-900/10 border-t border-b border-slate-900/40 py-20 px-4">
+        <div className="max-w-6xl mx-auto text-center space-y-12">
+          <div className="space-y-4">
+            <span className="text-xs font-mono font-bold tracking-widest text-emerald-400 uppercase bg-emerald-500/10 px-3 py-1 rounded-full">
+              Pioneering Co-Ownership
+            </span>
+            <h2 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
+              Why Choose BYD Horizon Club?
+            </h2>
+            <p className="max-w-2xl mx-auto text-slate-400 text-sm leading-relaxed">
+              Experience the convergence of revolutionary green energy transportation, secure decentralized co-ownership nodes, and elite member utility.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-slate-950/80 border border-slate-900 p-6 rounded-2xl text-left space-y-4 hover:border-slate-800 transition-all duration-300">
+              <div className="h-10 w-10 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400">
+                <Zap className="w-5 h-5" />
+              </div>
+              <h3 className="text-white font-display font-bold text-lg">Next-Gen EV Accessibility</h3>
+              <p className="text-slate-400 text-xs leading-relaxed font-sans">
+                Access fractionally-backed elite BYD electric vehicles without massive upfront capital investment or long-term high-interest credit commitments. Our flexible co-ownership blocks distribute costs evenly.
+              </p>
+            </div>
+
+            <div className="bg-slate-950/80 border border-slate-900 p-6 rounded-2xl text-left space-y-4 hover:border-slate-800 transition-all duration-300">
+              <div className="h-10 w-10 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-center justify-center text-blue-400">
+                <Shield className="w-5 h-5" />
+              </div>
+              <h3 className="text-white font-display font-bold text-lg">Anti-Fraud KYC Safeguarding</h3>
+              <p className="text-slate-400 text-xs leading-relaxed font-sans">
+                Operate with peace of mind. Every single partner on the Horizon platform is bound to verified biometric standards and strict, legally compliant identity checks, keeping the hardware pool safe from malicious actors.
+              </p>
+            </div>
+
+            <div className="bg-slate-950/80 border border-slate-900 p-6 rounded-2xl text-left space-y-4 hover:border-slate-800 transition-all duration-300">
+              <div className="h-10 w-10 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center text-amber-400">
+                <Award className="w-5 h-5" />
+              </div>
+              <h3 className="text-white font-display font-bold text-lg">Premium Incentives Platform</h3>
+              <p className="text-slate-400 text-xs leading-relaxed font-sans">
+                Earn while you co-own. Receive 10 dynamic loyalty points for every single standard settlement cycle, and redeem them directly for high-end lifestyle rewards, hardware upgrades, and eco-friendly accessories.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Charity section */}
       <section className="max-w-6xl mx-auto py-20 px-4 grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
         <div className="md:col-span-7 space-y-6 text-left">

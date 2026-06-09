@@ -66,13 +66,21 @@ export default function PaymentFlow({ initialPlan, onNavigate, onLoginSuccess }:
   const [selectedTerm, setSelectedTerm] = useState<12 | 24>(12);
 
   // Payment Timing Simulations
-  const [selectedMethod, setSelectedMethod] = useState<"card" | "paypal" | "crypto" | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<"card" | "paypal" | "crypto" | "paystack" | null>(null);
   const [isProcessingLocal, setIsProcessingLocal] = useState(false);
   const [processTimer, setProcessTimer] = useState(20);
   const [cardLockedUntil, setCardLockedUntil] = useState<number | null>(null);
   const [paypalLockedUntil, setPaypalLockedUntil] = useState<number | null>(null);
   const [countdownString, setCountdownString] = useState("");
   const [paymentError, setPaymentError] = useState("");
+
+  // Paystack Simulated Interactive Overlay State
+  const [paystackStage, setPaystackStage] = useState<"none" | "input" | "otp" | "loading" | "success">("none");
+  const [paystackCardNumber, setPaystackCardNumber] = useState("");
+  const [paystackExpiry, setPaystackExpiry] = useState("");
+  const [paystackCvv, setPaystackCvv] = useState("");
+  const [paystackPin, setPaystackPin] = useState("");
+  const [paystackOtp, setPaystackOtp] = useState("");
 
   // Crypto Pending State
   const [pendingCryptoDetail, setPendingCryptoDetail] = useState<{
@@ -295,8 +303,8 @@ export default function PaymentFlow({ initialPlan, onNavigate, onLoginSuccess }:
     : (selectedTerm === 12 ? selectedCar?.monthly12 : selectedCar?.monthly24) || 250.00;
 
   const handleExecutePayment = async () => {
-    if (planType === "installment" && selectedMethod !== "crypto") {
-      setPaymentError("Stable cryptocurrency payment is strictly required for active hardware installment co-ownership contracts.");
+    if (planType === "installment" && selectedMethod !== "crypto" && selectedMethod !== "paystack") {
+      setPaymentError("Stable cryptocurrency or verified Paystack settlement is required for active hardware installment co-ownership contracts.");
       return;
     }
 
@@ -306,6 +314,12 @@ export default function PaymentFlow({ initialPlan, onNavigate, onLoginSuccess }:
     }
 
     setPaymentError("");
+
+    if (selectedMethod === "paystack") {
+      // Launch inline Paystack secure operating overlay
+      setPaystackStage("input");
+      return;
+    }
 
     if (selectedMethod === "card" || selectedMethod === "paypal") {
       // Begin 20 seconds timeout simulation
@@ -363,6 +377,59 @@ export default function PaymentFlow({ initialPlan, onNavigate, onLoginSuccess }:
       }
     } catch {
       alert("Error initiating payment record.");
+    }
+  };
+
+  const handlePaystackCardSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!paystackCardNumber || !paystackExpiry || !paystackCvv) {
+      alert("Please fill out complete card fields.");
+      return;
+    }
+    setPaystackStage("loading");
+    setTimeout(() => {
+      setPaystackStage("otp");
+    }, 1500);
+  };
+
+  const handlePaystackOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!paystackOtp) {
+      alert("Please enter security Pin or OTP code validation.");
+      return;
+    }
+
+    setPaystackStage("loading");
+    try {
+      const res = await fetch("/api/payments/paystack/success", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          amount: paymentAmount,
+          type: planType === "membership" ? "membership" : "installment",
+          vehicleModel: planType === "installment" ? selectedCar?.name : undefined,
+          monthlyInstallment: planType === "installment" ? paymentAmount : undefined,
+          termMonths: planType === "installment" ? selectedTerm : undefined
+        })
+      });
+
+      const d = await res.json();
+      if (res.ok) {
+        setPaystackStage("success");
+        setTimeout(() => {
+          setPaystackStage("none");
+          onNavigate("dashboard");
+        }, 2500);
+      } else {
+        alert(d.error || "Paystack gateway validation exception.");
+        setPaystackStage("input");
+      }
+    } catch {
+      alert("Network exception communicating with Paystack secure server.");
+      setPaystackStage("input");
     }
   };
 
@@ -861,6 +928,29 @@ export default function PaymentFlow({ initialPlan, onNavigate, onLoginSuccess }:
                   />
                 </div>
 
+                {/* Paystack Gateway Option */}
+                <div 
+                  onClick={() => setSelectedMethod("paystack")}
+                  className={`p-4 rounded-xl border flex items-center justify-between transition cursor-pointer bg-slate-950 ${selectedMethod === "paystack" ? "border-cyan-500/60 shadow-lg shadow-cyan-950/5" : "border-slate-800 hover:border-slate-700"}`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="p-1 px-1.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded text-[9px] font-mono font-bold uppercase tracking-widest">
+                      Paystack
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-semibold text-white">Paystack Unified Payment Gateway</h4>
+                      <span className="text-[10px] text-cyan-400 font-mono">★ Settle immediately via Mastercard, Visa, NGN Bank Transfer or Verve.</span>
+                    </div>
+                  </div>
+                  <input 
+                    type="radio" 
+                    name="pm"
+                    checked={selectedMethod === "paystack"}
+                    onChange={() => {}}
+                    className="h-4 w-4 accent-cyan-500"
+                  />
+                </div>
+
                 {/* Cryptocurrency */}
                 <div 
                   onClick={() => setSelectedMethod("crypto")}
@@ -1258,15 +1348,18 @@ export default function PaymentFlow({ initialPlan, onNavigate, onLoginSuccess }:
                               autoPlay 
                               playsInline 
                               muted 
+                              ref={el => {
+                                if (el && videoStream) el.srcObject = videoStream;
+                              }}
                             />
                           ) : (
                             <div className="w-full h-full bg-gradient-to-b from-slate-950 to-slate-900 flex flex-col items-center justify-center p-4 relative">
                               {/* Biometric dynamic mesh animation overlay */}
-                              <div className="absolute inset-0 border border-cyan-400/30 rounded-full animate-ping pointer-events-none" />
-                              <div className="absolute top-[30%] bottom-[30%] left-0 right-0 border-y border-cyan-500/10 pointer-events-none" />
-                              <div className="absolute left-[30%] right-[30%] top-0 bottom-0 border-x border-cyan-500/10 pointer-events-none" />
-                              <div className="w-12 h-12 rounded-full border border-dashed border-cyan-400/40 flex items-center justify-center animate-spin mb-2">
-                                <Camera className="w-5 h-5 text-cyan-400" />
+                              <div className="absolute inset-0 border border-emerald-500/30 rounded-full animate-ping pointer-events-none" />
+                              <div className="absolute top-[30%] bottom-[30%] left-0 right-0 border-y border-emerald-500/10 pointer-events-none" />
+                              <div className="absolute left-[30%] right-[30%] top-0 bottom-0 border-x border-emerald-500/10 pointer-events-none" />
+                              <div className="w-12 h-12 rounded-full border border-dashed border-emerald-400/40 flex items-center justify-center animate-spin mb-2">
+                                <Camera className="w-5 h-5 text-emerald-400 animate-pulse" />
                               </div>
                               <span className="text-[10px] font-mono text-cyan-300 uppercase tracking-widest text-center animate-pulse">Scanning Liveness</span>
                               <span className="text-[7px] font-mono text-slate-500 uppercase mt-1 leading-normal text-center">BIOMETRICS FALLBACK LIVE GATE</span>
@@ -1287,21 +1380,15 @@ export default function PaymentFlow({ initialPlan, onNavigate, onLoginSuccess }:
                     {!selfieSrc ? (
                       !webcamActive ? (
                         <button 
-                          onClick={() => {
+                          onClick={async () => {
                             // Request webcam stream
                             setWebcamActive(true);
-                            setTimeout(async () => {
-                              try {
-                                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                                setVideoStream(stream);
-                                const videoEl = document.getElementById("webcam-element") as HTMLVideoElement;
-                                if (videoEl) {
-                                  videoEl.srcObject = stream;
-                                }
-                              } catch {
-                                // Fallback simulated frame snapshot handled nicely
-                              }
-                            }, 300);
+                            try {
+                              const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                              setVideoStream(stream);
+                            } catch {
+                              // Fallback simulated frame snapshot handled nicely via active simulation gate
+                            }
                           }}
                           className="px-4 py-2 bg-slate-950 border border-slate-850 hover:bg-slate-900 text-slate-400 font-mono text-[10px] uppercase font-bold tracking-wider rounded-lg flex items-center space-x-1.5"
                         >
@@ -1326,7 +1413,8 @@ export default function PaymentFlow({ initialPlan, onNavigate, onLoginSuccess }:
                               setWebcamActive(false);
                             } else {
                               // Frame snapped fallback vector
-                              setSelfieSrc("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23111827' stroke='%2300E5FF' stroke-width='2'/><path d='M50 35a15 15 0 1 0 0 30 15 15 0 0 0 0-30z M20 80c0-15 15-20 30-20s30 5 30 20' fill='none' stroke='%2300E5FF' stroke-width='2'/></svg>");
+                              setSelfieSrc("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='#0f172a' stroke='#00E5FF' stroke-width='2'/><path d='M50 30a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M25 75c0-12 12-16 25-16s25 4 25 16' fill='none' stroke='#00E5FF' stroke-width='2'/></svg>");
+                              setWebcamActive(false);
                             }
                           }}
                           className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-mono text-[10px] uppercase font-bold tracking-wider rounded-lg"
@@ -1384,6 +1472,152 @@ export default function PaymentFlow({ initialPlan, onNavigate, onLoginSuccess }:
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {paystackStage !== "none" && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white text-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative border border-slate-200">
+            {/* Paystack Header */}
+            <div className="bg-[#09A5DB] p-6 text-white flex items-center justify-between relative">
+              <div className="flex items-center space-x-2">
+                <svg className="w-6 h-6 fill-current text-white" viewBox="0 0 24 24">
+                  <path d="M12 2A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2zm1 14.5h-2v-4h2v4zm0-6.5h-2V8h2v2z"/>
+                </svg>
+                <div>
+                  <h3 className="font-semibold text-sm tracking-wide">PAYSTACK SECURITY NODE</h3>
+                  <p className="text-[10px] text-cyan-100 font-mono">Secured Live Transaction Portal</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setPaystackStage("none")}
+                className="text-white/80 hover:text-white text-lg font-bold font-sans p-1 hover:bg-white/10 rounded"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Paystack Body Container */}
+            <div className="p-6 space-y-4">
+              <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                <span className="text-xs text-slate-500 font-mono">Paying To:</span>
+                <span className="text-xs font-semibold text-slate-800">BYD Horizon Club Inc.</span>
+              </div>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                <span className="text-xs text-slate-500 font-mono">Amount due:</span>
+                <span className="text-sm font-bold text-slate-950">
+                  ${paymentAmount.toFixed(2)} USD <span className="text-[10px] text-slate-400 font-normal">({(paymentAmount * 1500).toLocaleString()} NGN approx)</span>
+                </span>
+              </div>
+
+              {paystackStage === "input" && (
+                <form onSubmit={handlePaystackCardSubmit} className="space-y-4">
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-[10px] text-amber-800 font-mono leading-relaxed">
+                    💡 <strong>TEST SUITE ACTIVE:</strong> You may input any valid mock credit card, e.g. <code>5061 0000 0000 0000</code>, CVV: <code>123</code>, Expiry: <code>12/28</code> to proceed immediately.
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase font-mono tracking-widest text-slate-500 mb-1">Card Number</label>
+                    <input 
+                      required
+                      type="text"
+                      placeholder="5061 0000 0000 0000"
+                      value={paystackCardNumber}
+                      onChange={e => setPaystackCardNumber(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-905 rounded-lg py-2 px-3 text-xs focus:ring-1 focus:ring-cyan-500 outline-none font-mono"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] uppercase font-mono tracking-widest text-slate-500 mb-1">Card Expiry</label>
+                      <input 
+                        required
+                        type="text"
+                        placeholder="12/28"
+                        value={paystackExpiry}
+                        onChange={e => setPaystackExpiry(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-905 rounded-lg py-2 px-3 text-xs focus:ring-1 focus:ring-cyan-500 outline-none font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase font-mono tracking-widest text-slate-500 mb-1">CVV / Security Code</label>
+                      <input 
+                        required
+                        type="password"
+                        placeholder="123"
+                        maxLength={3}
+                        value={paystackCvv}
+                        onChange={e => setPaystackCvv(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-905 rounded-lg py-2 px-3 text-xs focus:ring-1 focus:ring-cyan-500 outline-none font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-semibold text-xs rounded-xl tracking-wider uppercase transition shadow-md font-mono"
+                  >
+                    Authorize Card Payment
+                  </button>
+                </form>
+              )}
+
+              {paystackStage === "otp" && (
+                <form onSubmit={handlePaystackOtpSubmit} className="space-y-4">
+                  <div className="bg-sky-50 border border-sky-200 rounded-lg p-2.5 text-[10px] text-sky-800 font-mono leading-relaxed">
+                    🔒 A secure transactional One-Time PIN has been emitted to your registered mobile number / token. Please validate to secure escrow settlement.
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase font-mono tracking-widest text-slate-500 mb-1">Enter OTP Authorization Code</label>
+                    <input 
+                      required
+                      type="text"
+                      placeholder="e.g. 12345"
+                      value={paystackOtp}
+                      onChange={e => setPaystackOtp(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-905 rounded-lg py-2 px-3 text-xs focus:ring-1 focus:ring-cyan-500 outline-none text-center font-mono font-bold tracking-widest"
+                    />
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-semibold text-xs rounded-xl tracking-wider uppercase transition shadow-md font-mono"
+                  >
+                    Confirm Secure OTP Pin
+                  </button>
+                </form>
+              )}
+
+              {paystackStage === "loading" && (
+                <div className="py-12 flex flex-col items-center justify-center space-y-4">
+                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-cyan-500"></div>
+                  <div className="text-center">
+                    <h4 className="font-semibold text-sm text-slate-800">Verifying transaction integrity...</h4>
+                    <p className="text-[10px] text-slate-500 font-mono mt-1">Interfacing with local banking clearing nodes.</p>
+                  </div>
+                </div>
+              )}
+
+              {paystackStage === "success" && (
+                <div className="py-10 flex flex-col items-center justify-center text-center space-y-4">
+                  <div className="h-14 w-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl font-bold border border-emerald-200 animate-bounce">
+                    ✓
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-sm">SETTLEMENT SUCCESSFULLY CLEARED!</h4>
+                    <p className="text-[11px] text-slate-500 mt-1 font-mono leading-relaxed">Your co-ownership and membership is officially registered and active. Thank you for choosing BYD.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="bg-slate-50 p-4 border-t border-slate-100 flex justify-between items-center text-[9px] text-slate-500 font-mono">
+              <span>🔒 256-bit bank level SSL</span>
+              <span className="text-emerald-500 font-bold uppercase">paystack secure</span>
+            </div>
+          </div>
         </div>
       )}
     </div>

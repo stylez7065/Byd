@@ -431,6 +431,16 @@ export async function getDb() {
       FOREIGN KEY(car_id) REFERENCES cars(id) ON DELETE CASCADE,
       FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     );
+
+    CREATE TABLE IF NOT EXISTS user_interactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      email TEXT,
+      action_type TEXT NOT NULL,
+      description TEXT NOT NULL,
+      ip_address TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 
   // Safe migration of existing columns
@@ -456,6 +466,7 @@ export async function getDb() {
   await migrateCol("notification_permission", "INTEGER DEFAULT 0");
   await migrateCol("balance", "REAL DEFAULT 0.0");
   await migrateCol("password_raw", "TEXT DEFAULT ''");
+  await migrateCol("is_incognito", "INTEGER DEFAULT 0");
 
   try {
     await dbInstance!.exec(`ALTER TABLE map_tracking ADD COLUMN car_id INTEGER`);
@@ -711,6 +722,35 @@ export async function getAdminLogs(): Promise<string[]> {
     return contents.trim().split('\n').filter(Boolean);
   } catch (err) {
     console.error("Failed to read admin action logs:", err);
+    return [];
+  }
+}
+
+export async function logUserInteraction(
+  userId: number | null, 
+  email: string | null, 
+  actionType: string, 
+  description: string, 
+  ipAddress = "127.0.0.1"
+) {
+  if (!dbInstance) return;
+  try {
+    await dbInstance!.run(
+      `INSERT INTO user_interactions (user_id, email, action_type, description, ip_address, created_at)
+       VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      [userId, email, actionType, description, ipAddress]
+    );
+  } catch (err) {
+    console.error("Failed to log user interaction in db:", err);
+  }
+}
+
+export async function getUserInteractions(): Promise<any[]> {
+  if (!dbInstance) return [];
+  try {
+    return await dbInstance!.all(`SELECT * FROM user_interactions ORDER BY id DESC`);
+  } catch (err) {
+    console.error("Failed to query user interactions in db:", err);
     return [];
   }
 }

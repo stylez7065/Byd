@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MapPin, Users, Heart, Gift, ExternalLink, ShieldCheck, MailWarning, Compass, ShieldAlert, Copy, RefreshCw, Eye, EyeOff, Award, CheckCircle, Clock, Lock, Video, Flame, Shield, Monitor, Camera, Wallet, CreditCard, ArrowUpRight, Ship, Anchor, Upload, FileText } from "lucide-react";
+import { MapPin, Users, Heart, Gift, ExternalLink, ShieldCheck, MailWarning, Compass, ShieldAlert, Copy, RefreshCw, Eye, EyeOff, Award, CheckCircle, Clock, Lock, Video, Flame, Shield, Monitor, Camera, Wallet, CreditCard, ArrowUpRight, Ship, Anchor, Upload, FileText, Settings } from "lucide-react";
 import { DashboardData, RewardItem } from "../types";
 
 // Import new modular custom elements
@@ -46,14 +46,14 @@ const getAvatarUrl = (name: string) => {
 };
 
 export default function UserDashboard({ authToken, onNavigate }: UserDashboardProps) {
-  const [activeTab, setActiveTab] = useState<"tracking" | "webcams" | "car-inspect" | "gamification" | "referrals" | "rewards" | "support" | "wallet" | "insurance">("tracking");
+  const [activeTab, setActiveTab] = useState<"tracking" | "webcams" | "car-inspect" | "gamification" | "referrals" | "rewards" | "support" | "wallet" | "insurance" | "settings">("tracking");
   
   // KYC restriction popup
   const [kycPopupOpen, setKycPopupOpen] = useState(false);
   const [kycModalTabName, setKycModalTabName] = useState("");
 
-  const handleTabClick = (tab: "tracking" | "webcams" | "car-inspect" | "gamification" | "referrals" | "rewards" | "support" | "wallet" | "insurance") => {
-    if (data?.user?.kyc_status !== "verified" && tab !== "tracking" && tab !== "support" && tab !== "wallet") {
+  const handleTabClick = (tab: "tracking" | "webcams" | "car-inspect" | "gamification" | "referrals" | "rewards" | "support" | "wallet" | "insurance" | "settings") => {
+    if (data?.user?.kyc_status !== "verified" && tab !== "tracking" && tab !== "support" && tab !== "wallet" && tab !== "settings") {
       setKycModalTabName(
         tab === "webcams" ? "Live Telepresence Grid" :
         tab === "car-inspect" ? "HD Component Inspect" :
@@ -107,6 +107,15 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
   const [depositCoin, setDepositCoin] = useState<string>("USDT_TRC20");
   const [depositTxHash, setDepositTxHash] = useState<string>("");
   const [depositSubmitting, setDepositSubmitting] = useState<boolean>(false);
+  
+  // --- USER SETTINGS CUSTOMIZATION STATES ---
+  const [settingsName, setSettingsName] = useState("");
+  const [settingsPhone, setSettingsPhone] = useState("");
+  const [settingsCity, setSettingsCity] = useState("");
+  const [settingsWallet, setSettingsWallet] = useState("");
+  const [settingsIncognito, setSettingsIncognito] = useState(false);
+  const [settingsSuccess, setSettingsSuccess] = useState<string | null>(null);
+  const [settingsLoading, setSettingsLoading] = useState(false);
   
   // Fake toast referral notification popup
   const [toast, setToast] = useState<{ user: string; friend: string; amount: number } | null>(null);
@@ -255,6 +264,16 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
       Notification.requestPermission();
     }
   }, [authToken]);
+
+  useEffect(() => {
+    if (data?.user) {
+      setSettingsName(data.user.name || "");
+      setSettingsPhone(data.user.phone || "");
+      setSettingsCity(data.user.city || "");
+      setSettingsWallet(data.user.crypto_wallet_address || "");
+      setSettingsIncognito(!!data.user.is_incognito);
+    }
+  }, [data?.user?.id]);
 
   // Handle camera rotating Term Feed
   useEffect(() => {
@@ -677,6 +696,15 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
           </button>
 
           <button 
+            id="nav-settings"
+            onClick={() => handleTabClick("settings")}
+            className={`w-full py-2.5 px-4 text-left text-xs font-bold uppercase tracking-wider rounded-xl flex items-center space-x-3 transition duration-150 ${activeTab === "settings" ? "bg-blue-600 text-white font-bold shadow-lg shadow-blue-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"}`}
+          >
+            <Settings className="w-4 h-4" />
+            <span>Profile & KYC Settings</span>
+          </button>
+
+          <button 
             id="nav-support"
             onClick={() => onNavigate("help")}
             className="w-full py-2.5 px-4 text-left text-xs font-semibold rounded-xl flex items-center space-x-3 transition text-slate-400 hover:text-slate-200 hover:bg-slate-800"
@@ -805,13 +833,22 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
                               <img src={kycSelfie} alt="Bio Selfie" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                             ) : kycWebcamActive ? (
                               kycVideoStream ? (
-                                <video id="dashboard-webcam" className="w-full h-full object-cover" autoPlay playsInline muted />
+                                <video 
+                                  id="dashboard-webcam" 
+                                  className="w-full h-full object-cover" 
+                                  autoPlay 
+                                  playsInline 
+                                  muted 
+                                  ref={el => {
+                                    if (el && kycVideoStream) el.srcObject = kycVideoStream;
+                                  }}
+                                />
                               ) : (
                                 <div className="w-full h-full bg-gradient-to-b from-slate-950 to-slate-900 flex flex-col items-center justify-center p-2 text-center relative">
-                                  <div className="absolute inset-0 border border-red-500/20 rounded-full animate-ping pointer-events-none" />
-                                  <Camera className="w-4 h-4 text-red-400 animate-pulse mb-1" />
-                                  <span className="text-[7px] font-mono text-cyan-300 uppercase animate-pulse">Liveness Active</span>
-                                  <span className="text-[5px] font-mono text-slate-500 block leading-tight mt-0.5">VIRTUAL SIM FEED</span>
+                                  <div className="absolute inset-0 border border-emerald-500/30 rounded-full animate-ping pointer-events-none" />
+                                  <Camera className="w-5 h-5 text-emerald-400 animate-pulse mb-1" />
+                                  <span className="text-[7px] font-mono text-cyan-300 uppercase animate-pulse">Liveness Scan-Active</span>
+                                  <span className="text-[5px] font-mono text-slate-500 block leading-tight mt-0.5">SECURE SANDBOX SIMULATOR</span>
                                 </div>
                               )
                             ) : (
@@ -822,27 +859,21 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
                             )}
                           </div>
 
-                          <div className="mt-3 flex space-x-2 w-full justify-center">
+                          <div className="mt-3 flex space-x-2 w-full justify-center font-sans">
                             {!kycSelfie ? (
                               !kycWebcamActive ? (
                                 <button
                                   type="button"
-                                  onClick={() => {
+                                  onClick={async () => {
                                     setKycWebcamActive(true);
-                                    setTimeout(async () => {
-                                      try {
-                                        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                                        setKycVideoStream(stream);
-                                        const videoEl = document.getElementById("dashboard-webcam") as HTMLVideoElement;
-                                        if (videoEl) {
-                                          videoEl.srcObject = stream;
-                                        }
-                                      } catch {
-                                        // virtual fallback is gracefully rendered via state
-                                      }
-                                    }, 200);
+                                    try {
+                                      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                                      setKycVideoStream(stream);
+                                    } catch {
+                                      // Fallback elegantly handled via secure visual simulator
+                                    }
                                   }}
-                                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-850 text-slate-300 font-mono text-[9px] uppercase font-bold rounded border border-white/5 flex items-center space-x-1-center justify-center cursor-pointer"
+                                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-850 text-slate-300 font-mono text-[9px] uppercase font-bold rounded border border-white/5 flex items-center space-x-1.5 justify-center cursor-pointer"
                                 >
                                   <Camera className="w-3 h-3 text-cyan-400" />
                                   <span>Start Local Webcam</span>
@@ -865,8 +896,9 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
                                       setKycVideoStream(null);
                                       setKycWebcamActive(false);
                                     } else {
-                                      // generate beautifully styled face fallback profile
-                                      setKycSelfie("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23111827' stroke='%23f43f5e' stroke-width='2'/><path d='M50 35a15 15 0 1 0 0 30 15 15 0 0 0 0-30z M20 80c0-15 15-20 30-20s30 5 30 20' fill='none' stroke='%23f43f5e' stroke-width='2'/></svg>");
+                                      // generate beautifully styled face fallback profile for secure sandbox environment
+                                      setKycSelfie("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='#0f172a' stroke='#10b981' stroke-width='2'/><path d='M50 30a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M25 75c0-12 12-16 25-16s25 4 25 16' fill='none' stroke='#10b981' stroke-width='2'/></svg>");
+                                      setKycWebcamActive(false);
                                     }
                                   }}
                                   className="px-3 py-1.5 bg-red-650 hover:bg-red-600 text-white font-mono text-[9px] uppercase font-bold rounded border border-red-500/30 cursor-pointer"
@@ -1770,6 +1802,187 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
                     ))
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "settings" && data && data.user && (
+            <div className="space-y-6 animate-fade-in text-left">
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-10 space-y-8">
+                <div>
+                  <h3 className="font-display font-extrabold text-xl text-white tracking-tight">Account & Security Node Customization</h3>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Review and modify identity variables, manage privacy shields, and consult regulatory KYC status details below.
+                  </p>
+                </div>
+
+                {/* KYC Legal Audit Status Shield */}
+                <div className="p-6 rounded-2xl border bg-slate-950/80 border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div className="flex items-start space-x-4">
+                    <div className={`mt-0.5 p-2.5 rounded-xl border flex items-center justify-center ${
+                      data.user.kyc_status === "verified" 
+                        ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
+                        : data.user.kyc_status === "pending"
+                        ? "bg-amber-500/10 border-amber-500/20 text-amber-400"
+                        : "bg-red-500/10 border-red-500/20 text-red-400"
+                    }`}>
+                      <ShieldCheck className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-white font-display font-bold text-sm">Regulatory KYC Compliance Status</h4>
+                      <p className="text-slate-400 text-xs leading-normal font-sans">
+                        {data.user.kyc_status === "verified" 
+                          ? "Congratulations, your biometric passport compliance check has succeeded. Full co-ownership transit permissions are active."
+                          : data.user.kyc_status === "pending"
+                          ? "Your identification dossier is currently in the dispatch queue. A compliance editor will finalize review shortly (ETA: < 2h)."
+                          : "Your account is currently restricted from high-level features. Complete the identity biometric document upload pool to activate permissions."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-2">
+                    <span className="text-[10px] text-slate-500 font-mono uppercase tracking-widest block">Status Shield</span>
+                    <span className={`px-3.5 py-1 text-[10px] rounded-full uppercase tracking-wider font-mono font-black ${
+                      data.user.kyc_status === "verified" 
+                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40" 
+                        : data.user.kyc_status === "pending"
+                        ? "bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse"
+                        : "bg-red-500/20 text-red-400 border border-red-500/40"
+                    }`}>
+                      {data.user.kyc_status || "NOT_SUBMITTED"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Settings Form */}
+                <form 
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setSettingsSuccess(null);
+                    setSettingsLoading(true);
+                    try {
+                      const res = await fetch("/api/user/settings/update", {
+                        method: "POST",
+                        headers: { 
+                          "Content-Type": "application/json",
+                          "Authorization": `Bearer ${authToken}`
+                        },
+                        body: JSON.stringify({
+                          name: settingsName,
+                          phone: settingsPhone,
+                          city: settingsCity,
+                          crypto_wallet_address: settingsWallet,
+                          is_incognito: settingsIncognito
+                        })
+                      });
+                      const json = await res.json();
+                      if (res.ok) {
+                        setSettingsSuccess("🎉 Profile and security settings synchronized successfully!");
+                        loadSummaryData();
+                      } else {
+                        alert(json.error || "Failed to update settings.");
+                      }
+                    } catch {
+                      alert("Network link failure.");
+                    } finally {
+                      setSettingsLoading(false);
+                    }
+                  }} 
+                  className="space-y-6"
+                >
+                  {settingsSuccess && (
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl text-emerald-400 text-xs leading-normal font-sans">
+                      {settingsSuccess}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-[10px] text-slate-400 uppercase font-mono tracking-widest mb-1.5 font-bold">Full Legal Name (Required)</label>
+                      <input 
+                        required
+                        type="text"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 px-4 text-xs text-white focus:outline-none focus:border-blue-500 transition font-sans"
+                        value={settingsName}
+                        onChange={e => setSettingsName(e.target.value)}
+                        placeholder="Legal Name"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] text-slate-400 uppercase font-mono tracking-widest mb-1.5 font-bold">Contact Phone Number</label>
+                      <input 
+                        type="text"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 px-4 text-xs text-white focus:outline-none focus:border-blue-500 transition font-sans"
+                        value={settingsPhone}
+                        onChange={e => setSettingsPhone(e.target.value)}
+                        placeholder="+1-555-0192"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] text-slate-400 uppercase font-mono tracking-widest mb-1.5 font-bold">Base Operational City</label>
+                      <input 
+                        type="text"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 px-4 text-xs text-white focus:outline-none focus:border-blue-500 transition font-sans"
+                        value={settingsCity}
+                        onChange={e => setSettingsCity(e.target.value)}
+                        placeholder="metropolis, state"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] text-slate-400 uppercase font-mono tracking-widest mb-1.5 font-bold">Payout Reimbursement Wallet Address</label>
+                      <input 
+                        type="text"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 px-4 text-xs text-white font-mono focus:outline-none focus:border-blue-500 transition"
+                        value={settingsWallet}
+                        onChange={e => setSettingsWallet(e.target.value)}
+                        placeholder="TRX / ERC20 Address (e.g., T... or 0x...)"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Incognito/Hidden Mode Customization */}
+                  <div className="bg-slate-950 border border-slate-900 rounded-2xl p-5 hover:border-slate-800 transition duration-300">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1 pr-6 flex-1">
+                        <div className="flex items-center space-x-2">
+                          <EyeOff className="w-4 h-4 text-orange-400 shrink-0" />
+                          <h4 className="text-white font-display font-bold text-sm">Activate Incognito Navigation Mode</h4>
+                        </div>
+                        <p className="text-slate-400 text-xs leading-relaxed font-sans">
+                          Enabling Incognito masks your interactive telemetry coordinate logs on the shared Co-Owner dashboard map, but allows full admin observation for regulatory compliance.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setSettingsIncognito(!settingsIncognito)}
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          settingsIncognito ? "bg-orange-500" : "bg-slate-800"
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                            settingsIncognito ? "translate-x-5" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Submission Row */}
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={settingsLoading || !settingsName}
+                      className="px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white font-sans font-bold text-xs uppercase tracking-wider rounded-xl transition shadow-lg shadow-blue-500/10 cursor-pointer"
+                    >
+                      {settingsLoading ? "Saving Settings..." : "Synchronize Profile Options"}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           )}

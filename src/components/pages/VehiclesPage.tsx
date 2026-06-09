@@ -111,6 +111,7 @@ export const VehiclesPage: React.FC<VehiclesPageProps> = ({ onNavigate, id }) =>
       {comparedList.length > 0 && sidebarOpen && (
         <CarComparisonSidebar
           comparedCars={comparedList}
+          onAddCar={handleCompareToggle}
           onRemoveCar={handleRemoveCar}
           onClearAll={handleClearAll}
           onClose={() => setSidebarOpen(false)}

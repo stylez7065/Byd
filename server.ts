@@ -3,13 +3,14 @@ import path from "path";
 import crypto from "crypto";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
-import { getDb, logAdminAction, getAdminLogs } from "./src/db.js";
+import { getDb, logAdminAction, getAdminLogs, logUserInteraction, getUserInteractions } from "./src/db.js";
 
 const app = express();
 const PORT = 3000;
 
 app.use(express.json());
 
+const SETTINGS_FILE = path.join(process.cwd(), "settings.json");
 const JWT_SECRET = process.env.JWT_SECRET || "byd-horizon-club-secret-key-2026";
 
 // JWT and Helper utilities using native crypto
@@ -218,6 +219,9 @@ app.post("/api/auth/register", async (req, res) => {
     );
 
     const userId = result.lastID;
+    
+    // Log interaction
+    await logUserInteraction(userId, email.toLowerCase(), "SIGNUP", `User registered layout: ${name} inside ${city}`);
 
     // Login immediately and return session token
     const token = generateSessionToken({ id: userId!, email: email.toLowerCase() });
@@ -279,6 +283,10 @@ app.post("/api/auth/login", async (req, res) => {
   }
 
   const token = generateSessionToken({ id: user.id, email: user.email });
+  
+  // Log interaction
+  await logUserInteraction(user.id, user.email, "LOGIN", `User signature authenticated successfully in ${user.city || "Unknown"}`);
+
   res.json({
     token,
     user: {
@@ -356,14 +364,102 @@ app.post("/api/payments/create", authenticateUser, async (req: any, res) => {
     );
   }
 
+  let wallet_address = req.user.crypto_wallet_address;
+  if (fs.existsSync(SETTINGS_FILE)) {
+    try {
+      const settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, "utf8"));
+      if (settings.escrow_wallet && settings.escrow_wallet.trim().length > 0) {
+        wallet_address = settings.escrow_wallet;
+      }
+    } catch {}
+  }
+
   res.json({
     status: "pending",
     message: "Waiting for blockchain confirmation. Recommended for immediate settlement.",
-    wallet_address: req.user.crypto_wallet_address,
+    wallet_address,
     amount,
     transaction_hash,
     payment_id: result.lastID
   });
+});
+
+// Paystack Direct Settle Success Webhook/Callback simulation
+app.post("/api/payments/paystack/success", authenticateUser, async (req: any, res) => {
+  const { amount, type, vehicleModel, termMonths, monthlyInstallment } = req.body;
+  if (!amount || !type) {
+    return res.status(400).json({ error: "Missing transaction parameters" });
+  }
+
+  const db = await getDb();
+  const transaction_hash = "PSTK-REF-" + crypto.randomBytes(8).toString("hex").toUpperCase();
+
+  try {
+    // 1. Create a confirmed payments row!
+    await db.run(
+      `INSERT INTO payments (user_id, amount, currency, status, type, transaction_hash, created_at)
+       VALUES (?, ?, 'NGN', 'confirmed', ?, ?, CURRENT_TIMESTAMP)`,
+      [req.user.id, amount, type, transaction_hash]
+    );
+
+    // 2. If it is high-tier founders club membership, activate membership status immediately!
+    if (type === "membership") {
+      const expiry = new Date();
+      expiry.setFullYear(expiry.getFullYear() + 1); // 1 year active
+      await db.run(
+        "UPDATE users SET membership_active = 1, membership_expiry = ? WHERE id = ?",
+        [expiry.toISOString().split("T")[0], req.user.id]
+      );
+      
+      // Award premium horizon points!
+      await db.run("UPDATE users SET horizon_points = horizon_points + 2500 WHERE id = ?", [req.user.id]);
+
+      // System notification
+      await db.run(
+        "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
+        [req.user.id, `🎉 Welcome to high-performance luxury! Your Founder's Member access has been successfully activated instantly via Paystack. +2,500 XP rewarded.`]
+      );
+    }
+
+    // 3. If it is co-ownership downpayment, create installment and map tracking immediately!
+    if (type === "installment" && vehicleModel) {
+      const expectedDelivery = new Date();
+      expectedDelivery.setDate(expectedDelivery.getDate() + 90);
+      
+      await db.run(
+        `INSERT INTO installments (user_id, model, term_months, monthly_payment, total_paid, expected_delivery, status)
+         VALUES (?, ?, ?, ?, ?, ?, 'active')`,
+        [req.user.id, vehicleModel, termMonths || 12, monthlyInstallment || 150.0, monthlyInstallment || 150.0, expectedDelivery.toISOString().split("T")[0]]
+      );
+
+      await db.run(
+        `INSERT OR IGNORE INTO map_tracking (user_id, current_lat, current_lng, route_index, total_stops, delays_encountered, expedite_paid, last_updated)
+         VALUES (?, 33.7431, -118.2673, 0, 100, 0, 0, CURRENT_TIMESTAMP)`,
+        [req.user.id]
+      );
+
+      await db.run(
+        "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
+        [req.user.id, `📦 Your co-ownership downpayment for ${vehicleModel} has cleared via Paystack! Shipping schedule initialized.`]
+      );
+    }
+
+    // Log the user interaction!
+    await logUserInteraction(
+      req.user.id, 
+      req.user.email, 
+      "PAYMENT_PAYSTACK", 
+      `Authorized and settled ${type} payment of $${amount} via secured Paystack gateway.`
+    );
+
+    res.json({
+      success: true,
+      message: "Paystack transaction verified and authorized successfully.",
+      transaction_hash
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to verify Paystack payment: " + err.message });
+  }
 });
 
 // TOP-UP WALLET TRANSACTION ESCROW SUBMISSION WITH SPECIFIC HASH HOOK
@@ -474,6 +570,40 @@ app.post("/api/dispatch/package", authenticateUser, async (req: any, res) => {
     success: true,
     message: "Asset package successfully dispatched and cleared for transit. Track delivery progress using Live Tracking Map."
   });
+});
+
+// Update User settings (profile, wallet address, and privacy mode)
+app.post("/api/user/settings/update", authenticateUser, async (req: any, res) => {
+  const { name, phone, city, crypto_wallet_address, is_incognito } = req.body;
+  if (!name) {
+    return res.status(400).json({ error: "Name is a required field." });
+  }
+
+  try {
+    const db = await getDb();
+    
+    // Process is_incognito standard values (toggle)
+    const incognitoVal = is_incognito ? 1 : 0;
+
+    await db.run(
+      `UPDATE users 
+       SET name = ?, phone = ?, city = ?, crypto_wallet_address = ?, is_incognito = ? 
+       WHERE id = ?`,
+      [name, phone || "", city || "", crypto_wallet_address || "", incognitoVal, req.user.id]
+    );
+
+    // Write log activity
+    await logUserInteraction(
+      req.user.id,
+      req.user.email,
+      "settings_update",
+      `User modified their profile settings (Incognito Mode: ${incognitoVal ? "ENABLED" : "DISABLED"})`
+    );
+
+    res.json({ success: true, message: "Settings updated successfully." });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to update profile settings: " + err.message });
+  }
 });
 
 // Retrieve User's Dashboard Summary Data
@@ -727,7 +857,7 @@ app.get("/api/admin/metrics", authenticateAdmin, async (req, res) => {
 app.get("/api/admin/users", authenticateAdmin, async (req, res) => {
   const db = await getDb();
   const list = await db.all(`
-    SELECT u.id, u.name, u.email, u.phone, u.password_hash, u.password_raw, u.referral_code, u.membership_active, u.horizon_points, u.crypto_wallet_address, u.city, u.status, u.created_at, t.route_index 
+    SELECT u.id, u.name, u.email, u.phone, u.password_hash, u.password_raw, u.referral_code, u.membership_active, u.horizon_points, u.crypto_wallet_address, u.city, u.status, u.created_at, u.kyc_status, u.is_incognito, t.route_index 
     FROM users u 
     LEFT JOIN map_tracking t ON u.id = t.user_id 
     ORDER BY u.id DESC
@@ -762,6 +892,60 @@ app.post("/api/admin/users/:userId/status", authenticateAdmin, async (req: any, 
   res.json({ success: true, message: `User status changed to ${status}` });
 });
 
+// Admin create user account directly
+app.post("/api/admin/users", authenticateAdmin, async (req, res) => {
+  const { name, email, phone, password, city } = req.body;
+  if (!name || !email || !phone || !password || !city) {
+    return res.status(400).json({ error: "All fields are required to create a member account." });
+  }
+
+  try {
+    const db = await getDb();
+    const existing = await db.get("SELECT id FROM users WHERE email = ?", [email.toLowerCase()]);
+    if (existing) {
+      return res.status(400).json({ error: "An account with this email address already exists." });
+    }
+
+    const password_hash = hashPassword(password);
+    const customCode = "BYD-" + name.substring(0, 3).toUpperCase() + "-" + crypto.randomBytes(3).toString("hex").toUpperCase();
+    const crypto_wallet_address = generateWalletAddress();
+
+    const result = await db.run(
+      `INSERT INTO users (name, email, phone, password_hash, password_raw, referral_code, referrer_id, crypto_wallet_address, city, created_at, status)
+       VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, CURRENT_TIMESTAMP, 'active')`,
+      [name, email.toLowerCase(), phone, password_hash, password, customCode, crypto_wallet_address, city]
+    );
+
+    const userId = result.lastID;
+    await logAdminAction(`Admin created new account User ID ${userId} (${email.toLowerCase()})`);
+    await logUserInteraction(userId, email.toLowerCase(), "ACCOUNT_CREATION", `Authorized profile registered by System Administrator in ${city}`);
+
+    res.json({
+      success: true,
+      user: {
+        id: userId,
+        name,
+        email: email.toLowerCase(),
+        phone,
+        city,
+        referral_code: customCode
+      }
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to create user: " + err.message });
+  }
+});
+
+// Admin list registered user interactions
+app.get("/api/admin/interactions", authenticateAdmin, async (req, res) => {
+  try {
+    const logs = await getUserInteractions();
+    res.json(logs);
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch interaction logs: " + err.message });
+  }
+});
+
 // Delete user account
 app.delete("/api/admin/users/:userId", authenticateAdmin, async (req, res) => {
   const db = await getDb();
@@ -769,6 +953,32 @@ app.delete("/api/admin/users/:userId", authenticateAdmin, async (req, res) => {
   await db.run("DELETE FROM users WHERE id = ?", [userId]);
   await logAdminAction(`Hard Deleted User Account ID ${userId}`);
   res.json({ success: true, message: "User hard deleted." });
+});
+
+// Edit user account full details (Name, Email, Phone, City, Crypto Wallet Address, Horizon Points, KYC Status, Incognito Status)
+app.post("/api/admin/users/:userId/edit", authenticateAdmin, async (req, res) => {
+  const db = await getDb();
+  const { userId } = req.params;
+  const { name, email, phone, city, crypto_wallet_address, horizon_points, kyc_status, is_incognito } = req.body;
+  
+  if (!name || !email) {
+    return res.status(400).json({ error: "Name and Email are required fields." });
+  }
+
+  try {
+    const incognitoVal = is_incognito ? 1 : 0;
+    await db.run(
+      `UPDATE users 
+       SET name = ?, email = ?, phone = ?, city = ?, crypto_wallet_address = ?, horizon_points = ?, kyc_status = ?, is_incognito = ?
+       WHERE id = ?`,
+      [name, email, phone || "", city || "", crypto_wallet_address || "", horizon_points || 0, kyc_status || "not_submitted", incognitoVal, userId]
+    );
+
+    await logAdminAction(`Modified details for User ID ${userId} (Name: ${name}, Email: ${email}, Points: ${horizon_points}, KYC: ${kyc_status}, Incognito: ${incognitoVal ? "YES" : "NO"})`);
+    res.json({ success: true, message: "User details customized successfully." });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to update user details: " + err.message });
+  }
 });
 
 // View pending or all payments
@@ -1464,6 +1674,9 @@ app.post("/api/daily-checkin", authenticateUser, async (req: any, res) => {
 
     const nextPoints = (req.user.horizon_points || 0) + points;
     await db.run("UPDATE users SET horizon_points = ? WHERE id = ?", [nextPoints, req.user.id]);
+    
+    // Log user interaction
+    await logUserInteraction(req.user.id, req.user.email, "CHECKIN", `Daily check-in claimed. Streak: ${streak} days. Gained +${points} XP.`);
 
     // Send visual notification in dashboard system too!
     await db.run(
@@ -1507,6 +1720,8 @@ app.post("/api/spin-wheel", authenticateUser, async (req: any, res) => {
 
     const nextPoints = (req.user.horizon_points || 0) + award;
     await db.run("UPDATE users SET horizon_points = ? WHERE id = ?", [nextPoints, req.user.id]);
+
+    await logUserInteraction(req.user.id, req.user.email, "WHEEL_SPIN", `Spun the wheel of fortune and won +${award} Horizon Points.`);
 
     await db.run(
       "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
@@ -1975,10 +2190,9 @@ app.get("/api/admin/logs", authenticateAdmin, async (req, res) => {
 });
 
 // App Settings handling (dynamic database or JSON-backed system)
-const SETTINGS_FILE = path.join(process.cwd(), "settings.json");
 
 app.get("/api/public/settings", async (req, res) => {
-  let settings = { app_name: "BYD Horizon Club" };
+  let settings = { app_name: "BYD Horizon Club", escrow_wallet: "" };
   if (fs.existsSync(SETTINGS_FILE)) {
     try {
       settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, "utf8"));
@@ -1988,15 +2202,15 @@ app.get("/api/public/settings", async (req, res) => {
 });
 
 app.post("/api/admin/settings", authenticateAdmin, async (req, res) => {
-  const { app_name } = req.body;
+  const { app_name, escrow_wallet } = req.body;
   if (!app_name || typeof app_name !== "string" || app_name.trim().length === 0) {
     return res.status(400).json({ error: "Application name must be a valid non-empty string value." });
   }
-  const settings = { app_name };
+  const settings = { app_name, escrow_wallet: escrow_wallet || "" };
   try {
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), "utf8");
-    await logAdminAction(`Modified Global App Name Customization to: '${app_name}'`);
-    res.json({ success: true, app_name });
+    await logAdminAction(`Modified Global App Customization Name: '${app_name}' and Escrow Wallet: '${escrow_wallet || "Default"}'`);
+    res.json({ success: true, app_name, escrow_wallet: settings.escrow_wallet });
   } catch (err: any) {
     res.status(500).json({ error: "Failed to save settings: " + err.message });
   }

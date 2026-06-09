@@ -410,28 +410,21 @@ export default function App() {
               </>
             )}
 
-            {/* Premium 3-Position Segment Mood Select Bar */}
-            <div className="flex items-center bg-slate-900/60 border border-slate-800 p-1 rounded-xl" id="mood-selector-segment">
+            {/* Premium Mature Light/Dark Select Bar */}
+            <div className="flex items-center bg-slate-950 border border-slate-800 p-0.5 rounded-xl" id="mood-selector-segment">
               <button
                 onClick={() => handleMoodChange("light")}
-                className={`px-2.5 py-1 text-[9px] font-mono tracking-wider rounded-lg transition-all duration-300 cursor-pointer ${mood === "light" ? "bg-white text-slate-950 font-black shadow-md border border-slate-200" : "text-slate-400 hover:text-white"}`}
-                title="Pristine Light Mode"
+                className={`px-3 py-1 text-[10px] font-mono tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${mood === "light" ? "bg-white text-slate-950 font-semibold shadow-md border border-slate-200" : "text-slate-400 hover:text-white"}`}
+                title="Matured Light Mode"
               >
                 LIGHT
               </button>
               <button
                 onClick={() => handleMoodChange("dark")}
-                className={`px-2.5 py-1 text-[9px] font-mono tracking-wider rounded-lg transition-all duration-300 cursor-pointer ${mood === "dark" ? "bg-orange-500 text-black font-black shadow-md" : "text-slate-400 hover:text-white"}`}
-                title="Sunset Charcoal Glow"
+                className={`px-3 py-1 text-[10px] font-mono tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${mood === "dark" ? "bg-slate-800 text-amber-400 font-semibold shadow-md" : "text-slate-400 hover:text-white"}`}
+                title="Sleek Dark Mode"
               >
                 DARK
-              </button>
-              <button
-                onClick={() => handleMoodChange("blue")}
-                className={`px-2.5 py-1 text-[9px] font-mono tracking-wider rounded-lg transition-all duration-300 cursor-pointer ${mood === "blue" ? "bg-blue-600 text-white font-black shadow-md" : "text-slate-400 hover:text-cyan-400"}`}
-                title="Deep Electric Blue"
-              >
-                BLUE
               </button>
             </div>
           </div>
@@ -472,7 +465,7 @@ export default function App() {
                   onClick={() => handleNavigate("payment")}
                   className="py-1.5 px-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition shadow-md shadow-cyan-400/10 cursor-pointer"
                 >
-                  Access Console
+                  Sign In / Sign Up
                 </button>
               </>
             )}
