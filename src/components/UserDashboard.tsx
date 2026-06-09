@@ -12,6 +12,7 @@ import { DailyCheckin } from "./gamification/DailyCheckin";
 import { SpinWheel } from "./gamification/SpinWheel";
 import { BYDQuiz } from "./gamification/BYDQuiz";
 import { NotificationBell } from "./ui/NotificationBell";
+import HelpPage from "./HelpPage";
 
 interface UserDashboardProps {
   authToken: string;
@@ -706,8 +707,8 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
 
           <button 
             id="nav-support"
-            onClick={() => onNavigate("help")}
-            className="w-full py-2.5 px-4 text-left text-xs font-semibold rounded-xl flex items-center space-x-3 transition text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+            onClick={() => handleTabClick("support")}
+            className={`w-full py-2.5 px-4 text-left text-xs font-bold uppercase tracking-wider rounded-xl flex items-center space-x-3 transition duration-150 ${activeTab === "support" ? "bg-blue-600 text-white font-bold shadow-lg shadow-blue-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"}`}
           >
             <ShieldCheck className="w-4 h-4" />
             <span>Support & Help FAQ</span>
@@ -1977,13 +1978,19 @@ export default function UserDashboard({ authToken, onNavigate }: UserDashboardPr
                     <button
                       type="submit"
                       disabled={settingsLoading || !settingsName}
-                      className="px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white font-sans font-bold text-xs uppercase tracking-wider rounded-xl transition shadow-lg shadow-blue-500/10 cursor-pointer"
+                      className="px-6 py-3 bg-blue-600 hover:bg-blue-400 disabled:opacity-40 text-white font-sans font-bold text-xs uppercase tracking-wider rounded-xl transition shadow-lg shadow-blue-500/10 cursor-pointer"
                     >
                       {settingsLoading ? "Saving Settings..." : "Synchronize Profile Options"}
                     </button>
                   </div>
                 </form>
               </div>
+            </div>
+          )}
+
+          {activeTab === "support" && (
+            <div className="space-y-6 animate-fade-in text-left">
+              <HelpPage onNavigate={onNavigate} />
             </div>
           )}
 

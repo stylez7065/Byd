@@ -13,16 +13,16 @@ const getMoodStyles = (activeMood: "light" | "dark" | "blue") => {
     case "light":
       return `
         #applet-viewport {
-          --color-blue-600: #1d4ed8 !important;
-          --color-blue-500: #3b82f6 !important;
-          --color-blue-400: #60a5fa !important;
-          --color-cyan-400: #0891b2 !important;
-          --color-cyan-300: #22d3ee !important;
-          --color-cyan-550: #0d9488 !important;
-          --color-slate-900: #f8fafc !important;
-          --color-slate-950: #ffffff !important;
-          background-color: #f8fafc !important;
-          color: #1e293b !important;
+          --color-blue-600: #1c1c1e !important;
+          --color-blue-500: #2c2c2e !important;
+          --color-blue-400: #48484a !important;
+          --color-cyan-400: #1c1c1e !important;
+          --color-cyan-300: #3a3a3c !important;
+          --color-cyan-550: #8e8e93 !important;
+          --color-slate-900: #ffffff !important;
+          --color-slate-950: #f4f4f6 !important;
+          background-color: #f4f4f6 !important;
+          color: #1c1c1e !important;
         }
         #applet-viewport, 
         #applet-viewport main, 
@@ -41,11 +41,11 @@ const getMoodStyles = (activeMood: "light" | "dark" | "blue") => {
         #applet-viewport .bg-slate-950\/80,
         #applet-viewport .bg-slate-900\/90 {
           background-color: #ffffff !important;
-          color: #1e293b !important;
-          border-color: #e2e8f0 !important;
+          color: #1c1c1e !important;
+          border-color: #e5e5ea !important;
         }
         #applet-viewport main {
-          background-color: #f8fafc !important;
+          background-color: #f4f4f6 !important;
         }
         #applet-viewport .border-white\/5, 
         #applet-viewport .border-white\/10, 
@@ -53,57 +53,84 @@ const getMoodStyles = (activeMood: "light" | "dark" | "blue") => {
         #applet-viewport .border-slate-850, 
         #applet-viewport .border-slate-900, 
         #applet-viewport .border-slate-800\/60 {
-          border-color: #e2e8f0 !important;
+          border-color: #e5e5ea !important;
         }
         #applet-viewport input, 
         #applet-viewport select, 
         #applet-viewport textarea {
-          background-color: #f1f5f9 !important;
-          color: #0f172a !important;
-          border-color: #cbd5e1 !important;
+          background-color: #fafafa !important;
+          color: #1c1c1e !important;
+          border-color: #d1d1d6 !important;
         }
         #applet-viewport .text-white, 
         #applet-viewport .text-slate-100, 
         #applet-viewport .text-slate-200 {
-          color: #0f172a !important;
+          color: #1c1c1e !important;
         }
         #applet-viewport .text-slate-300, 
         #applet-viewport .text-slate-400, 
         #applet-viewport .text-slate-500 {
-          color: #475569 !important;
+          color: #8e8e93 !important;
         }
         #applet-viewport .bg-white\/5, 
         #applet-viewport .bg-white\/10 {
-          background-color: #e2e8f0 !important;
-          color: #1e293b !important;
+          background-color: #e5e5ea !important;
+          color: #1c1c1e !important;
         }
         #applet-viewport table thead {
-          background-color: #f1f5f9 !important;
-          color: #475569 !important;
+          background-color: #f4f4f6 !important;
+          color: #8e8e93 !important;
         }
         #applet-viewport table tbody tr:hover {
-          background-color: #f8fafc !important;
+          background-color: #fafafa !important;
         }
-        #applet-viewport .bg-yellow-500\/10 {
-          background-color: #fefbeb !important;
-          border-color: #fde047 !important;
+        #applet-viewport .bg-gradient-to-r,
+        #applet-viewport .bg-gradient-to-br,
+        #applet-viewport .bg-gradient-to-tr {
+          background-image: none !important;
+          background-color: #f4f4f6 !important;
+          color: #1c1c1e !important;
         }
-        #applet-viewport .bg-red-500\/10 {
-          background-color: #fef2f2 !important;
-          border-color: #fca5a5 !important;
+        /* Overrides of cyan/blue colors for clean Light Mode ash theme */
+        #applet-viewport .bg-blue-600,
+        #applet-viewport .bg-blue-550,
+        #applet-viewport .bg-cyan-500,
+        #applet-viewport .bg-blue-500 {
+          background-color: #1c1c1e !important;
+          color: #ffffff !important;
+          border: 1px solid #1c1c1e !important;
+        }
+        #applet-viewport .bg-blue-600:hover,
+        #applet-viewport .bg-blue-500:hover {
+          background-color: #2c2c2e !important;
+          color: #ffffff !important;
+        }
+        #applet-viewport .text-cyan-400,
+        #applet-viewport .text-cyan-300,
+        #applet-viewport .text-blue-500,
+        #applet-viewport .text-blue-600 {
+          color: #1c1c1e !important;
+        }
+        #applet-viewport .shadow-lg,
+        #applet-viewport .shadow-cyan-400\/20,
+        #applet-viewport .shadow-blue-500\/20 {
+          box-shadow: none !important;
         }
       `;
     case "blue":
+    case "dark":
+    default:
       return `
+        /* Premium mature ash black/grey configuration mode */
         #applet-viewport {
-          --color-blue-600: #2563eb !important;
-          --color-blue-500: #3b82f6 !important;
-          --color-blue-400: #60a5fa !important;
-          --color-cyan-400: #06b6d4 !important;
-          --color-cyan-300: #67e8f9 !important;
-          --color-cyan-550: #0891b2 !important;
-          background-color: #020617 !important;
-          color: #e2e8f0 !important;
+          --color-blue-600: #1c1c1f !important; /* Matte dark graphite */
+          --color-blue-500: #2a2a2e !important; /* Steel charcoal */
+          --color-blue-400: #444449 !important; /* Iron slate */
+          --color-cyan-400: #eaeaea !important; /* Soft premium ash white */
+          --color-cyan-300: #b5b5be !important; /* Pure silver gray */
+          --color-cyan-550: #2d2d34 !important; /* Deep border slate */
+          background-color: #0c0b0e !important;
+          color: #eaeaea !important;
         }
         #applet-viewport, 
         #applet-viewport main, 
@@ -121,114 +148,139 @@ const getMoodStyles = (activeMood: "light" | "dark" | "blue") => {
         #applet-viewport .bg-slate-950\/40,
         #applet-viewport .bg-slate-950\/80,
         #applet-viewport .bg-slate-900\/90 {
-          background-color: #070e24 !important;
-          color: #cbd5e1 !important;
-          border-color: #1e293b !important;
+          background-color: #0c0b0e !important;
+          color: #eaeaea !important;
+          border-color: #212125 !important;
         }
         #applet-viewport main {
-          background-color: #030818 !important;
+          background-color: #09090b !important;
         }
         #applet-viewport .bg-slate-900, 
         #applet-viewport .bg-slate-950, 
         #applet-viewport .bg-[#1A1A1A],
-        #applet-viewport .bg-[#121212] {
-          background-color: #0c152e !important;
-          border-color: #1e3a8a/40 !important;
+        #applet-viewport .bg-[#121212],
+        #applet-viewport .bg-slate-950\/80 {
+          background-color: #121215 !important;
+          border-color: #222227 !important;
         }
         #applet-viewport .border-white\/5, 
         #applet-viewport .border-white\/10, 
         #applet-viewport .border-slate-800, 
         #applet-viewport .border-slate-850, 
         #applet-viewport .border-slate-900, 
-        #applet-viewport .border-slate-800\/60 {
-          border-color: #1e293b !important;
+        #applet-viewport .border-slate-800\/60,
+        #applet-viewport .border-cyan-500\/30,
+        #applet-viewport .border-cyan-550,
+        #applet-viewport .border-blue-500\/20,
+        #applet-viewport .border-cyan-500\/20 {
+          border-color: #222227 !important;
         }
         #applet-viewport input, 
         #applet-viewport select, 
         #applet-viewport textarea {
-          background-color: #020716 !important;
-          color: #67e8f9 !important;
-          border-color: #1e293b !important;
+          background-color: #16161a !important;
+          color: #ffffff !important;
+          border-color: #2b2b32 !important;
         }
         #applet-viewport table thead {
-          background-color: #0b1329 !important;
-          color: #38bdf8 !important;
+          background-color: #16161a !important;
+          color: #a1a1aa !important;
         }
         #applet-viewport table tbody tr:hover {
-          background-color: #0f172a !important;
+          background-color: #18181c !important;
+        }
+        
+        /* Eliminate all crazy bright colorful gradients with sleek monochrome matte backgrounds */
+        #applet-viewport .bg-gradient-to-r,
+        #applet-viewport .bg-gradient-to-br,
+        #applet-viewport .bg-gradient-to-tr,
+        #applet-viewport .bg-gradient-to-b {
+          background-image: none !important;
+          background-color: #121215 !important;
+        }
+        #applet-viewport .from-blue-600,
+        #applet-viewport .to-cyan-500,
+        #applet-viewport .from-cyan-500,
+        #applet-viewport .to-blue-600 {
+          background-image: none !important;
+          background-color: #18181c !important;
+        }
+        
+        /* Direct elegant button overrides */
+        #applet-viewport .bg-blue-600,
+        #applet-viewport .bg-blue-700,
+        #applet-viewport .bg-blue-500,
+        #applet-viewport .bg-[#1a237e] {
+          background-color: #222227 !important;
+          border: 1px solid #36363d !important;
+          color: #eaeaea !important;
+          box-shadow: none !important;
+        }
+        #applet-viewport .bg-blue-600:hover,
+        #applet-viewport .bg-blue-500:hover,
+        #applet-viewport .bg-blue-750:hover {
+          background-color: #2a2a2f !important;
+          border-color: #43434d !important;
+        }
+        
+        #applet-viewport .bg-cyan-500,
+        #applet-viewport .bg-cyan-600,
+        #applet-viewport .bg-cyan-400 {
+          background-color: #eaeaea !important; /* Premium ash white master trigger button */
+          color: #0c0b0e !important;
+          box-shadow: none !important;
+          font-weight: 700 !important;
+          border: 1px solid #ffffff !important;
+        }
+        #applet-viewport .bg-cyan-500:hover,
+        #applet-viewport .bg-cyan-600:hover,
+        #applet-viewport .bg-cyan-400:hover {
+          background-color: #ffffff !important;
+          color: #000000 !important;
+        }
+        
+        /* General neon cyan text override to look matured silvery gray */
+        #applet-viewport .text-cyan-400,
+        #applet-viewport .text-cyan-300,
+        #applet-viewport .text-[#00E5FF] {
+          color: #d1d1d6 !important;
+        }
+        #applet-viewport .text-slate-300, 
+        #applet-viewport .text-slate-400, 
+        #applet-viewport .text-slate-500 {
+          color: #8c8c93 !important;
+        }
+        #applet-viewport .text-blue-500,
+        #applet-viewport .text-blue-600 {
+          color: #aeaeb2 !important;
         }
         #applet-viewport .text-white {
           color: #ffffff !important;
         }
-        #applet-viewport .text-slate-350, 
-        #applet-viewport .text-slate-400 {
-          color: #94a3b8 !important;
+
+        /* Remove any neon or bright blue shadows */
+        #applet-viewport .shadow-lg,
+        #applet-viewport .shadow-md,
+        #applet-viewport .shadow-cyan-400\/20,
+        #applet-viewport .shadow-blue-500\/20,
+        #applet-viewport .shadow-indigo-500\/10 {
+          box-shadow: none !important;
         }
-      `;
-    case "dark":
-    default:
-      return `
-        #applet-viewport {
-          --color-blue-600: #ea580c !important;
-          --color-blue-500: #f97316 !important;
-          --color-blue-400: #fb923c !important;
-          --color-cyan-400: #f97316 !important;
-          --color-cyan-300: #fdba74 !important;
-          --color-cyan-550: #c2410c !important;
-          background-color: #09090b !important;
-          color: #f4f4f5 !important;
+
+        /* Make custom scrollbar blend excellently */
+        #applet-viewport ::-webkit-scrollbar {
+          width: 7px;
+          height: 7px;
         }
-        #applet-viewport, 
-        #applet-viewport main, 
-        #applet-viewport nav, 
-        #applet-viewport footer, 
-        #applet-viewport .bg-slate-900, 
-        #applet-viewport .bg-slate-950, 
-        #applet-viewport .bg-[#111111], 
-        #applet-viewport .bg-[#1A1A1A], 
-        #applet-viewport .bg-[#121212],
-        #applet-viewport .bg-slate-900\/50,
-        #applet-viewport .bg-slate-900\/40,
-        #applet-viewport .bg-slate-900\/80,
-        #applet-viewport .bg-[#1e293b],
-        #applet-viewport .bg-slate-950\/40,
-        #applet-viewport .bg-slate-950\/80,
-        #applet-viewport .bg-slate-900\/90 {
-          background-color: #09090b !important;
-          color: #f4f4f5 !important;
-          border-color: #1f1f23 !important;
+        #applet-viewport ::-webkit-scrollbar-track {
+          background: #09090b;
         }
-        #applet-viewport main {
-          background-color: #030303 !important;
+        #applet-viewport ::-webkit-scrollbar-thumb {
+          background: #222227;
+          border-radius: 4px;
         }
-        #applet-viewport .bg-slate-900, 
-        #applet-viewport .bg-slate-950, 
-        #applet-viewport .bg-[#1A1A1A],
-        #applet-viewport .bg-[#121212] {
-          background-color: #121214 !important;
-          border-color: #27272a !important;
-        }
-        #applet-viewport .border-white\/5, 
-        #applet-viewport .border-white\/10, 
-        #applet-viewport .border-slate-800, 
-        #applet-viewport .border-slate-850, 
-        #applet-viewport .border-slate-900, 
-        #applet-viewport .border-slate-800\/60 {
-          border-color: #27272a !important;
-        }
-        #applet-viewport input, 
-        #applet-viewport select, 
-        #applet-viewport textarea {
-          background-color: #020202 !important;
-          color: #ffffff !important;
-          border-color: #27272a !important;
-        }
-        #applet-viewport table thead {
-          background-color: #020202 !important;
-          color: #a1a1aa !important;
-        }
-        #applet-viewport table tbody tr:hover {
-          background-color: #18181b !important;
+        #applet-viewport ::-webkit-scrollbar-thumb:hover {
+          background: #36363d;
         }
       `;
   }
@@ -296,6 +348,7 @@ export default function App() {
       setToken(savedToken);
       try {
         setUser(JSON.parse(savedUser));
+        setCurrentView("dashboard"); // Force dashboard on start if logged in
       } catch {
         localStorage.removeItem("byd_horizon_token");
         localStorage.removeItem("byd_horizon_user");
@@ -307,10 +360,19 @@ export default function App() {
     setViewParams(params);
     
     // Auth route guard
-    if (view === "dashboard" && !token) {
-      setCurrentView("payment");
+    if (token) {
+      // If logged in, they can only navigate to "dashboard" or "admin" (if they are admin)
+      if (view === "admin") {
+        setCurrentView("admin");
+      } else {
+        setCurrentView("dashboard");
+      }
     } else {
-      setCurrentView(view);
+      if (view === "dashboard") {
+        setCurrentView("payment");
+      } else {
+        setCurrentView(view);
+      }
     }
     
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -321,6 +383,7 @@ export default function App() {
     setUser(newUser);
     localStorage.setItem("byd_horizon_token", newToken);
     localStorage.setItem("byd_horizon_user", JSON.stringify(newUser));
+    setCurrentView("dashboard"); // Force go to dashboard upon login/signup
   };
 
   const handleLogout = () => {
